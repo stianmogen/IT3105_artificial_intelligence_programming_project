@@ -26,4 +26,47 @@ def nim_game(piles, max_sticks):
             print("Player 2 wins!")
             return
 
-nim_game([5, 10, 15], 3)
+nim_game([10, 10, 10], 10)
+
+
+class GameStateData:
+    def __init__(self, piles, maxPicks):
+        self.piles = piles
+        self.maxPicks = maxPicks
+        self._finished = False
+
+
+
+class GameState:
+    def __init__(self, piles=None, maxPicks=None):
+        self.data = GameStateData(piles, maxPicks)
+
+    # [10, 10, 10], 10
+    #
+    def isFinished(self):
+        return self.data._finished
+
+
+    def getLegalPiles(self):
+        if self.isFinished():
+            return []
+        else:
+            return filter(lambda x: x > 0, self.data.piles)
+
+
+    def getLegalPicks(self, pileIndex):
+        if self.isFinished():
+            return []
+        else:
+            return self.data.piles[pileIndex]
+
+
+    def checkWin(self):
+        return all(x <= 0 for x in self.data.piles)
+
+
+
+
+
+
+
