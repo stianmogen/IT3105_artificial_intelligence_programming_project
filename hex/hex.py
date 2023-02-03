@@ -13,16 +13,11 @@ class HexBoard:
             return True
         return False
 
-
     def has_winner(self):
         for i in range(self.size):
             if self.check_row_for_winner(i) or self.check_column_for_winner(i):
                 return True
         return self.check_diagonal_for_winner()
-
-    '''
-    
-    '''
 
     def check_row_for_winner(self, row):
         color = self.board[row][0]
@@ -52,13 +47,6 @@ class HexBoard:
                 return False
         return True
 
-    '''
-    def visualize(self):
-        for i in range(self.size):
-            row = ['-' if j == 0 else j for j in self.board[i]]
-            print(' '.join(row))
-    '''
-
     def print_board(self):
         rows = len(self.board)
         cols = len(self.board[0])
@@ -84,6 +72,7 @@ class HexBoard:
             indent += 2
         headings = " " * (indent - 2) + headings
         print(headings)
+
 
 class HexGame:
     def __init__(self, size):
