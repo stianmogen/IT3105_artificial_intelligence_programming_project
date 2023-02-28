@@ -2,6 +2,7 @@ import copy
 
 from manager import MiniMaxAgent
 
+
 class HexBoard:
     def __init__(self, size):
         self.size = size
@@ -168,7 +169,7 @@ def reach_left(y, x, blocked):
     blocked[y][x] = True
     for dr, dc in [(-1, 0), (0, -1), (1, 0), (0, 1), (1, -1), (-1, 1)]:
         next_row, next_col = y + dr, x + dc
-        if (0 <= next_row <= (len(blocked)-1)) & (0 <= next_col <= (len(blocked[0])-1)):
+        if (0 <= next_row <= (len(blocked) - 1)) & (0 <= next_col <= (len(blocked[0]) - 1)):
             if not blocked[next_row][next_col] and reach_left(next_row, next_col, blocked):
                 return True
 
@@ -220,22 +221,25 @@ def reach_bottom(y, x, blocked):
     return False
 
 
+def check_win(y, x, state):
+    player = state[y][x]
+    print(player)
+
+    blocked = [[False if state[i][j] == player else True for j in range(len(state))] for i in range(len(state[0]))]
+
+    if player == 1:
+        return reach_left(y, x, copy.deepcopy(blocked)) & reach_right(y, x, copy.deepcopy(blocked))
+    else:
+        return reach_top(y, x, copy.deepcopy(blocked)) & reach_bottom(y, x, copy.deepcopy(blocked))
+
+
 if __name__ == "__main__":
     board = [[1, 2, 1, 1],
              [2, 1, 2, 2],
              [2, 2, 0, 2],
              [0, 1, 2, 0]]
 
-    x = 1
-    y = 0
+    x = 2
+    y = 3
 
-    player = board[y][x]
-    print(player)
-
-    blocked = [[False if board[i][j] == player else True for j in range(len(board))] for i in range(len(board[0]))]
-    if player == 1:
-        print(reach_left(y, x, copy.deepcopy(blocked)))
-        print(reach_right(y, x, copy.deepcopy(blocked)))
-    else:
-        print(reach_top(y, x, copy.deepcopy(blocked)))
-        print(reach_bottom(y, x, copy.deepcopy(blocked)))
+    print(check_win(y, x, board))
