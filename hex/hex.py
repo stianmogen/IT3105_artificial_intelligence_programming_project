@@ -1,5 +1,6 @@
-from manager import MiniMaxAgent
+import copy
 
+from manager import MiniMaxAgent
 
 class HexBoard:
     def __init__(self, size):
@@ -165,55 +166,29 @@ def reach_left(y, x, blocked):
         return True
 
     blocked[y][x] = True
-    if y > 0:
-        if not blocked[y - 1][x] and reach_left(y - 1, x, blocked):
-            return True
-    if x > 0:
-        if not blocked[y][x - 1] and reach_left(y, x - 1, blocked):
-            return True
-    if y < (len(blocked) - 1):
-        if not blocked[y + 1][x] and reach_left(y + 1, x, blocked):
-            return True
-    if x < (len(blocked[0]) - 1):
-        if not blocked[y][x + 1] and reach_left(y, x + 1, blocked):
-            return True
-    if y < (len(blocked) - 1) & x > 0:
-        if not blocked[y + 1][x - 1] and reach_left(y + 1, x - 1, blocked):
-            return True
-    if y > 0 & x < (len(blocked[0]) - 1):
-        if not blocked[y - 1][x + 1] and reach_left(y - 1, x + 1, blocked):
-            return True
+    for dr, dc in [(-1, 0), (0, -1), (1, 0), (0, 1), (1, -1), (-1, 1)]:
+        next_row, next_col = y + dr, x + dc
+        if (0 <= next_row <= (len(blocked)-1)) & (0 <= next_col <= (len(blocked[0])-1)):
+            if not blocked[next_row][next_col] and reach_left(next_row, next_col, blocked):
+                return True
 
     return False
 
 
 def reach_right(y, x, blocked):
     print(y, x)
-
     if x == len(blocked[0]) - 1:
         return True
 
     blocked[y][x] = True
-    if y > 0:
-        if not blocked[y - 1][x] and reach_right(y - 1, x, blocked):
-            return True
-    if x > 0:
-        if not blocked[y][x - 1] and reach_right(y, x - 1, blocked):
-            return True
-    if y < (len(blocked) - 1):
-        if not blocked[y + 1][x] and reach_right(y + 1, x, blocked):
-            return True
-    if x < (len(blocked[0]) - 1):
-        if not blocked[y][x + 1] and reach_right(y, x + 1, blocked):
-            return True
-    if y < (len(blocked) - 1) & x > 0:
-        if not blocked[y + 1][x - 1] and reach_right(y + 1, x - 1, blocked):
-            return True
-    if y > 0 & x < (len(blocked[0]) - 1):
-        if not blocked[y - 1][x + 1] and reach_right(y - 1, x + 1, blocked):
-            return True
+    for dr, dc in [(-1, 0), (0, -1), (1, 0), (0, 1), (1, -1), (-1, 1)]:
+        next_row, next_col = y + dr, x + dc
+        if (0 <= next_row <= (len(blocked) - 1)) & (0 <= next_col <= (len(blocked[0]) - 1)):
+            if not blocked[next_row][next_col] and reach_right(next_row, next_col, blocked):
+                return True
 
     return False
+
 
 def reach_top(y, x, blocked):
     print(y, x)
@@ -221,24 +196,11 @@ def reach_top(y, x, blocked):
         return True
 
     blocked[y][x] = True
-    if y > 0:
-        if not blocked[y - 1][x] and reach_top(y - 1, x, blocked):
-            return True
-    if x > 0:
-        if not blocked[y][x - 1] and reach_top(y, x - 1, blocked):
-            return True
-    if y < (len(blocked) - 1):
-        if not blocked[y + 1][x] and reach_top(y + 1, x, blocked):
-            return True
-    if x < (len(blocked[0]) - 1):
-        if not blocked[y][x + 1] and reach_top(y, x + 1, blocked):
-            return True
-    if y < (len(blocked) - 1) & x > 0:
-        if not blocked[y + 1][x - 1] and reach_top(y + 1, x - 1, blocked):
-            return True
-    if y > 0 & x < (len(blocked[0]) - 1):
-        if not blocked[y - 1][x + 1] and reach_top(y - 1, x + 1, blocked):
-            return True
+    for dr, dc in [(-1, 0), (0, -1), (1, 0), (0, 1), (1, -1), (-1, 1)]:
+        next_row, next_col = y + dr, x + dc
+        if (0 <= next_row <= (len(blocked) - 1)) & (0 <= next_col <= (len(blocked[0]) - 1)):
+            if not blocked[next_row][next_col] and reach_top(next_row, next_col, blocked):
+                return True
 
     return False
 
@@ -249,53 +211,31 @@ def reach_bottom(y, x, blocked):
         return True
 
     blocked[y][x] = True
-    if y > 0:
-        if not blocked[y - 1][x] and reach_bottom(y - 1, x, blocked):
-            return True
-    if x > 0:
-        if not blocked[y][x - 1] and reach_bottom(y, x - 1, blocked):
-            return True
-    if y < (len(blocked) - 1):
-        if not blocked[y + 1][x] and reach_bottom(y + 1, x, blocked):
-            return True
-    if x < (len(blocked[0]) - 1):
-        if not blocked[y][x + 1] and reach_bottom(y, x + 1, blocked):
-            return True
-    if y < (len(blocked) - 1) & x > 0:
-        if not blocked[y + 1][x - 1] and reach_bottom(y + 1, x - 1, blocked):
-            return True
-    if y > 0 & x < (len(blocked[0]) - 1):
-        if not blocked[y - 1][x + 1] and reach_bottom(y - 1, x + 1, blocked):
-            return True
+    for dr, dc in [(-1, 0), (0, -1), (1, 0), (0, 1), (1, -1), (-1, 1)]:
+        next_row, next_col = y + dr, x + dc
+        if (0 <= next_row <= (len(blocked) - 1)) & (0 <= next_col <= (len(blocked[0]) - 1)):
+            if not blocked[next_row][next_col] and reach_bottom(next_row, next_col, blocked):
+                return True
 
     return False
 
 
 if __name__ == "__main__":
-    board = [[1, 0, 2, 1],
-             [1, 0, 2, 0],
-             [2, 0, 2, 0],
-             [0, 2, 0, 0]]
+    board = [[1, 2, 1, 1],
+             [2, 1, 2, 2],
+             [2, 2, 0, 2],
+             [0, 1, 2, 0]]
 
-    '''
-    [[1, 0, 2, 1],
-       [1, 0, 2, 0],
-          [2, 0, 2, 0],
-             [0, 2, 0, 0]]
-    '''
-
-    x = 2
+    x = 1
     y = 0
 
     player = board[y][x]
     print(player)
 
     blocked = [[False if board[i][j] == player else True for j in range(len(board))] for i in range(len(board[0]))]
-    print(blocked)
     if player == 1:
-        print(reach_left(y, x, blocked))
-        print(reach_right(y, x, blocked))
+        print(reach_left(y, x, copy.deepcopy(blocked)))
+        print(reach_right(y, x, copy.deepcopy(blocked)))
     else:
-        print("y", y)
-        print(reach_top(y, x, blocked))
-        print(reach_bottom(y, x, blocked))
+        print(reach_top(y, x, copy.deepcopy(blocked)))
+        print(reach_bottom(y, x, copy.deepcopy(blocked)))
