@@ -18,93 +18,6 @@ class HexBoard:
             return True
         return False
 
-    def has_winner(self):
-        for i in range(self.size):
-            if self.check_row_for_winner(i, self.board) or self.check_column_for_winner(i, self.board):
-                return True
-        return self.check_diagonal_for_winner(self.board)
-
-    def check_win_condition_from_current_state(self, state):
-        for i in range(self.size):
-            if self.check_row_for_winner(i, state) or self.check_column_for_winner(i, state):
-                return True
-        return self.check_diagonal_for_winner(state)
-
-    def has_won(self, placed_tile):
-        # current_player =
-        pass
-
-    """
-    Vite om win condition er top-bunn eller venstre høyre
-    Vite må vite hva siste trekk ble lagt
-    """
-
-    def is_edge(self, i):
-        return i == 0 or i == self.size - 1
-
-    def check_winning_state_player_two(self):
-        reachable_nodes = []
-        for i in range(self.board_size):
-            if self.board[i][0] == 2:
-                reachable_nodes.append((i, 0))
-        for node in reachable_nodes:
-            for n in range(-1, 1):
-                if (
-                        0 <= node[0] + n < self.board_size
-                        and self.board[node[0] + n][node[1] + 1] == 2
-                ):
-                    if node[1] + 1 == self.board_size - 1:
-                        return True
-                    if (node[0] + n, node[1] + 1) not in reachable_nodes:
-                        reachable_nodes.append((node[0] + n, node[1] + 1))
-            if (0 <= node[0] - 1 < self.board_size
-                    # Check node to the left in case this has not been picked up by earlier search
-                    and self.board[node[0] - 1][node[1]] == 2):
-                if (node[0] - 1,
-                    node[1]) not in reachable_nodes:
-                    reachable_nodes.append((node[0] - 1, node[1]))
-            if (0 <= node[0] + 1 < self.board_size
-                    # Check node to the right in case this has not been picked up by earlier search
-                    and self.board[node[0] + 1][node[1]] == 2):
-                if (node[0] + 1,
-                    node[1]) not in reachable_nodes:
-                    reachable_nodes.append((node[0] + 1, node[1]))
-        return False
-
-    def reach_right(self, state, player, x, y, visited, rearched=False):
-        pass
-
-    def win_top_bot(self, state, x, y, visited, top=False, bot=False):
-        pass
-
-    def check_row_for_winner(self, row, board):
-        color = board[row][0]
-
-        if color == 0:
-            return False
-        for i in range(1, self.size):
-            if board[row][i] != color:
-                return False
-        return True
-
-    def check_column_for_winner(self, col, board):
-        color = board[0][col]
-        if color == 0:
-            return False
-        for i in range(1, self.size):
-            if board[i][col] != color:
-                return False
-        return True
-
-    def check_diagonal_for_winner(self, board):
-        color = board[0][0]
-        if color == 0:
-            return False
-        for i in range(1, self.size):
-            if board[i][i] != color:
-                return False
-        return True
-
     def print_board(self):
         rows = len(self.board)
         cols = len(self.board[0])
@@ -131,6 +44,67 @@ class HexBoard:
         headings = " " * (indent - 2) + headings
         print(headings)
 
+    def reach_left(self, y, x, blocked):
+        if x == 0:
+            return True
+
+        blocked[y][x] = True
+        for dr, dc in [(-1, 0), (0, -1), (1, 0), (0, 1), (1, -1), (-1, 1)]:
+            next_row, next_col = y + dr, x + dc
+            if (0 <= next_row <= (len(blocked) - 1)) & (0 <= next_col <= (len(blocked[0]) - 1)):
+                if not blocked[next_row][next_col] and self.reach_left(next_row, next_col, blocked):
+                    return True
+
+        return False
+
+    def reach_right(self, y, x, blocked):
+        if x == len(blocked[0]) - 1:
+            return True
+
+        blocked[y][x] = True
+        for dr, dc in [(-1, 0), (0, -1), (1, 0), (0, 1), (1, -1), (-1, 1)]:
+            next_row, next_col = y + dr, x + dc
+            if (0 <= next_row <= (len(blocked) - 1)) & (0 <= next_col <= (len(blocked[0]) - 1)):
+                if not blocked[next_row][next_col] and self.reach_right(next_row, next_col, blocked):
+                    return True
+
+        return False
+
+    def reach_top(self, y, x, blocked):
+        if y == 0:
+            return True
+
+        blocked[y][x] = True
+        for dr, dc in [(-1, 0), (0, -1), (1, 0), (0, 1), (1, -1), (-1, 1)]:
+            next_row, next_col = y + dr, x + dc
+            if (0 <= next_row <= (len(blocked) - 1)) & (0 <= next_col <= (len(blocked[0]) - 1)):
+                if not blocked[next_row][next_col] and self.reach_top(next_row, next_col, blocked):
+                    return True
+
+        return False
+
+    def reach_bottom(self, y, x, blocked):
+        if y == len(blocked) - 1:
+            return True
+
+        blocked[y][x] = True
+        for dr, dc in [(-1, 0), (0, -1), (1, 0), (0, 1), (1, -1), (-1, 1)]:
+            next_row, next_col = y + dr, x + dc
+            if (0 <= next_row <= (len(blocked) - 1)) & (0 <= next_col <= (len(blocked[0]) - 1)):
+                if not blocked[next_row][next_col] and self.reach_bottom(next_row, next_col, blocked):
+                    return True
+
+        return False
+
+    def check_win(self, y, x, state):
+        player = state[y][x]
+        blocked = [[False if state[i][j] == player else True for j in range(len(state))] for i in range(len(state[0]))]
+
+        if player == 1:
+            return self.reach_left(y, x, copy.deepcopy(blocked)) & self.reach_right(y, x, copy.deepcopy(blocked))
+        else:
+            return self.reach_top(y, x, copy.deepcopy(blocked)) & self.reach_bottom(y, x, copy.deepcopy(blocked))
+
 
 class HexGame:
     def __init__(self, size):
@@ -139,8 +113,10 @@ class HexGame:
     def play(self):
         agent = MiniMaxAgent(self)
         current_player = 1
-        while not self.board.has_winner():
+        x, y = -1, -1
+        while not self.board.check_win(x, y, self.board.board):
             self.board.print_board()
+            print("another one")
             x, y = input(f'Player {current_player} turn. Enter x and y between 0-{self.board.size - 1}: ').split()
             while int(x) > self.board.size - 1 or int(y) > self.board.size - 1:
                 x, y = input(f'Player {current_player} turn. Enter x and y between 0-{self.board.size - 1}: ').split()
@@ -149,8 +125,8 @@ class HexGame:
             if self.board.place_piece(x, y, current_player):
                 current_player = 2 if current_player == 1 else 1
                 print(current_player)
-                agent.best_move(self.board.board, current_player)
-
+                _, self.board.board = agent.best_move(self.board.board, current_player)
+                print("board", self.board.board)
             else:
                 print('Place already filled, try again.')
 
@@ -158,88 +134,5 @@ class HexGame:
         print(f'Player {current_player} wins!')
 
 
-# HexGame(2).play()
-
-
-def reach_left(y, x, blocked):
-    print(y, x)
-    if x == 0:
-        return True
-
-    blocked[y][x] = True
-    for dr, dc in [(-1, 0), (0, -1), (1, 0), (0, 1), (1, -1), (-1, 1)]:
-        next_row, next_col = y + dr, x + dc
-        if (0 <= next_row <= (len(blocked) - 1)) & (0 <= next_col <= (len(blocked[0]) - 1)):
-            if not blocked[next_row][next_col] and reach_left(next_row, next_col, blocked):
-                return True
-
-    return False
-
-
-def reach_right(y, x, blocked):
-    print(y, x)
-    if x == len(blocked[0]) - 1:
-        return True
-
-    blocked[y][x] = True
-    for dr, dc in [(-1, 0), (0, -1), (1, 0), (0, 1), (1, -1), (-1, 1)]:
-        next_row, next_col = y + dr, x + dc
-        if (0 <= next_row <= (len(blocked) - 1)) & (0 <= next_col <= (len(blocked[0]) - 1)):
-            if not blocked[next_row][next_col] and reach_right(next_row, next_col, blocked):
-                return True
-
-    return False
-
-
-def reach_top(y, x, blocked):
-    print(y, x)
-    if y == 0:
-        return True
-
-    blocked[y][x] = True
-    for dr, dc in [(-1, 0), (0, -1), (1, 0), (0, 1), (1, -1), (-1, 1)]:
-        next_row, next_col = y + dr, x + dc
-        if (0 <= next_row <= (len(blocked) - 1)) & (0 <= next_col <= (len(blocked[0]) - 1)):
-            if not blocked[next_row][next_col] and reach_top(next_row, next_col, blocked):
-                return True
-
-    return False
-
-
-def reach_bottom(y, x, blocked):
-    print(y, x)
-    if y == len(blocked) - 1:
-        return True
-
-    blocked[y][x] = True
-    for dr, dc in [(-1, 0), (0, -1), (1, 0), (0, 1), (1, -1), (-1, 1)]:
-        next_row, next_col = y + dr, x + dc
-        if (0 <= next_row <= (len(blocked) - 1)) & (0 <= next_col <= (len(blocked[0]) - 1)):
-            if not blocked[next_row][next_col] and reach_bottom(next_row, next_col, blocked):
-                return True
-
-    return False
-
-
-def check_win(y, x, state):
-    player = state[y][x]
-    print(player)
-
-    blocked = [[False if state[i][j] == player else True for j in range(len(state))] for i in range(len(state[0]))]
-
-    if player == 1:
-        return reach_left(y, x, copy.deepcopy(blocked)) & reach_right(y, x, copy.deepcopy(blocked))
-    else:
-        return reach_top(y, x, copy.deepcopy(blocked)) & reach_bottom(y, x, copy.deepcopy(blocked))
-
-
 if __name__ == "__main__":
-    board = [[1, 2, 1, 1],
-             [2, 1, 2, 2],
-             [2, 2, 0, 2],
-             [0, 1, 2, 0]]
-
-    x = 2
-    y = 3
-
-    print(check_win(y, x, board))
+    HexGame(3).play()

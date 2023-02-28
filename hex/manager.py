@@ -3,16 +3,16 @@ class MiniMaxAgent:
     def __init__(self, game):
         self.game = game
 
-    def minimax(self, state, current_player, is_maximizing):
-        if (score := self.evaluate(state, is_maximizing)) is not None:
+    def minimax(self, state, current_player, is_maximizing, y, x):
+        if (score := self.evaluate(state, is_maximizing, y, x)) is not None:
             return score
         return (max if is_maximizing else min)(
-            self.minimax(new_state, current_player=1 if current_player == 2 else 2, is_maximizing=not is_maximizing)
-            for new_state in self.possible_new_states(state, current_player=current_player)
+            self.minimax(new_state, current_player=1 if current_player == 2 else 2, is_maximizing=not is_maximizing, y=y, x=x)
+            for new_state, y, x in self.possible_new_states(state, current_player=current_player)
         )
 
     """
-    Finding the best move for the current player
+    Finding the best move for the current player 
     Generating new possible states from the current situation
     Based on each new state checking minmax of that move
     Changing player to the other because it is the other players turn
@@ -21,16 +21,17 @@ class MiniMaxAgent:
     :return: positive score with a new state if win is secured or 0 and the last state if not
     """
     def best_move(self, state, current_player):
-        for new_state in self.possible_new_states(state, current_player):
-            score = self.minimax(new_state, 1 if current_player == 2 else 2, is_maximizing=False)
+        for new_state, y, x in self.possible_new_states(state, current_player):
+            score = self.minimax(new_state, 1 if current_player == 2 else 2, is_maximizing=False, y=y, x=x)
             if score > 0:
                 break
+        print("SCORE:", score)
+        print("NEW STATE:", new_state)
         return score, new_state
 
 
-    def evaluate(self, state, is_maximizing):
-        print("has winner: ", self.game.board.check_win_condition_from_current_state(state))
-        if self.game.board.check_win_condition_from_current_state(state):
+    def evaluate(self, state, is_maximizing, y, x):
+        if self.game.board.check_win(y, x, state):
             return 1 if is_maximizing else -1
         return None
 
@@ -40,10 +41,10 @@ class MiniMaxAgent:
         Going through the board rows
         For each row returning a generator with new possible states after setting 0 element to current player
         """
-        for i in range(len(state)):
-            for j in range(len(state[0])):
-                if state[i][j] == 0:
-                    yield state[0:i] + [state[i][0:j] + [current_player] + state[i][j + 1:]] + state[i + 1:]
+        for y in range(len(state)):
+            for x in range(len(state[0])):
+                if state[y][x] == 0:
+                    yield state[0:y] + [state[y][0:x] + [current_player] + state[y][x + 1:]] + state[y + 1:], y, x
 
 
 class MonteCarlo:
