@@ -1,3 +1,14 @@
+def possible_new_states(state, current_player):
+    """
+    Going through the board rows
+    For each row returning a generator with new possible states after setting 0 element to current player
+    """
+    for y in range(len(state)):
+        for x in range(len(state[0])):
+            if state[y][x] == 0:
+                yield state[0:y] + [state[y][0:x] + [current_player] + state[y][x + 1:]] + state[y + 1:], y, x
+
+
 class MiniMaxAgent:
 
     def __init__(self, game):
@@ -7,8 +18,9 @@ class MiniMaxAgent:
         if (score := self.evaluate(state, is_maximizing, y, x)) is not None:
             return score
         return (max if is_maximizing else min)(
-            self.minimax(new_state, current_player=1 if current_player == 2 else 2, is_maximizing=not is_maximizing, y=y, x=x)
-            for new_state, y, x in self.possible_new_states(state, current_player=current_player)
+            self.minimax(new_state, current_player=1 if current_player == 2 else 2, is_maximizing=not is_maximizing,
+                         y=y, x=x)
+            for new_state, y, x in possible_new_states(state, current_player=current_player)
         )
 
     """
@@ -20,31 +32,18 @@ class MiniMaxAgent:
     :param current_player: the player that is going to make a move
     :return: positive score with a new state if win is secured or 0 and the last state if not
     """
+
     def best_move(self, state, current_player):
-        for new_state, y, x in self.possible_new_states(state, current_player):
+        for new_state, y, x in possible_new_states(state, current_player):
             score = self.minimax(new_state, 1 if current_player == 2 else 2, is_maximizing=False, y=y, x=x)
             if score > 0:
                 break
-        print("SCORE:", score)
-        print("NEW STATE:", new_state)
-        return score, new_state, x, y
-
+        return score, new_state, y, x
 
     def evaluate(self, state, is_maximizing, y, x):
         if self.game.board.check_win(y, x, state):
-            return 1 if is_maximizing else -1
+            return -1 if is_maximizing else 1
         return None
-
-
-    def possible_new_states(self, state, current_player):
-        """
-        Going through the board rows
-        For each row returning a generator with new possible states after setting 0 element to current player
-        """
-        for y in range(len(state)):
-            for x in range(len(state[0])):
-                if state[y][x] == 0:
-                    yield state[0:y] + [state[y][0:x] + [current_player] + state[y][x + 1:]] + state[y + 1:], y, x
 
 
 class MonteCarlo:
@@ -55,5 +54,6 @@ class MonteCarlo:
     3. rollout (random simulation)
     4. backpropagation
     """
+
     def __init__(self, game, exploration_constant=1.4, num_simulations=10):
         self.game = game

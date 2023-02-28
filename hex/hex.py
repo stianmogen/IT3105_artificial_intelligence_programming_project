@@ -11,10 +11,14 @@ class HexBoard:
         # 2 = player 2
         self.board = [[0 for x in range(size)] for y in range(size)]
         self.column_names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        self.finished = False
 
-    def place_piece(self, x, y, player):
-        if self.board[x][y] == 0:
-            self.board[x][y] = player
+    def place_piece(self, y, x, player):
+        if self.board[y][x] == 0:
+            self.board[y][x] = player
+
+            if self.check_win(y, x, self.board):
+                self.finished = True
             return True
         return False
 
@@ -112,24 +116,31 @@ class HexGame:
 
     def play(self):
         agent = MiniMaxAgent(self)
-        current_player = 1
-        current_player = 2 if current_player == 1 else 1
-        print(current_player)
-        _, self.board.board, x, y = agent.best_move(self.board.board, current_player)
+
         self.board.print_board()
-        while not self.board.check_win(x, y, self.board.board):
-            self.board.print_board()
-            x, y = input(f'Player {current_player} turn. Enter x and y between 0-{self.board.size - 1}: ').split()
-            while (int(x) > self.board.size - 1 or int(y) > self.board.size - 1) and not self.board.check_win(x, y, self.board.board):
-                x, y = input(f'Player {current_player} turn. Enter x and y between 0-{self.board.size - 1}: ').split()
+        current_player = 1
+
+        _, _, y, x = agent.best_move(self.board.board, current_player)
+        self.board.place_piece(y, x, current_player)
+        self.board.print_board()
+        while not self.board.finished:
+            y, x = input(f'Player {current_player} turn. Enter y and x between 0-{self.board.size - 1}: ').split()
+
+            while not (0 <= int(x) <= self.board.size - 1 and 0 <= int(y) <= self.board.size - 1):
+                y, x = input(f'Player {current_player} turn. Enter y and x between 0-{self.board.size - 1}: ').split()
             x = int(x)
             y = int(y)
+
             current_player = 2 if current_player == 1 else 1
-            if self.board.place_piece(x, y, current_player):
+            if self.board.place_piece(y, x, current_player):
                 self.board.print_board()
+
                 current_player = 2 if current_player == 1 else 1
-                print(current_player)
-                _, self.board.board, x, y = agent.best_move(self.board.board, current_player)
+                _, _, y, x = agent.best_move(self.board.board, current_player)
+                print(y, x)
+                self.board.place_piece(y, x, current_player)
+                print(self.board.board)
+                self.board.print_board()
             else:
                 print('Place already filled, try again.')
 
@@ -138,4 +149,4 @@ class HexGame:
 
 
 if __name__ == "__main__":
-    HexGame(3).play()
+    HexGame(4).play()
