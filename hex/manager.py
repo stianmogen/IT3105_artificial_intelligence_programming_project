@@ -1,41 +1,58 @@
-class AgentState:
-
-    def __init__(self, playerNum):
-        self.playerNum = playerNum
-
-    def __str__(self):
-        return "Player " + self.playerNum
-
-
-class Actions:
-    def __init__(self, piles, maxPicks):
-        pass
-
-
 class MiniMaxAgent:
 
-    def minimax(self, state, is_maximizing):
+    def __init__(self, game):
+        self.game = game
+
+    def minimax(self, state, current_player, is_maximizing):
         if (score := self.evaluate(state, is_maximizing)) is not None:
             return score
-
         return (max if is_maximizing else min)(
-            self.minimax(new_state, is_maximizing=not is_maximizing)
-            for new_state in self.possible_new_states(state)
+            self.minimax(new_state, current_player=1 if current_player == 2 else 2, is_maximizing=not is_maximizing)
+            for new_state in self.possible_new_states(state, current_player=current_player)
         )
 
-    def best_move(self, state):
-        for new_state in self.possible_new_states(state):
-            score = self.minimax(new_state, is_maximizing=False)
+    """
+    Finding the best move for the current player
+    Generating new possible states from the current situation
+    Based on each new state checking minmax of that move
+    Changing player to the other because it is the other players turn
+    :param state: current game state
+    :param current_player: the player that is going to make a move
+    :return: positive score with a new state if win is secured or 0 and the last state if not
+    """
+    def best_move(self, state, current_player):
+        for new_state in self.possible_new_states(state, current_player):
+            score = self.minimax(new_state, 1 if current_player == 2 else 2, is_maximizing=False)
             if score > 0:
                 break
         return score, new_state
 
+
     def evaluate(self, state, is_maximizing):
-        if all(counters == 0 for counters in state):
+        print("has winner: ", self.game.board.check_win_condition_from_current_state(state))
+        if self.game.board.check_win_condition_from_current_state(state):
             return 1 if is_maximizing else -1
         return None
 
-    def possible_new_states(self, state):
-        for pile, counters in enumerate(state):
-            for remain in range(counters):
-                yield state[:pile] + [remain] + state[pile + 1:]
+
+    def possible_new_states(self, state, current_player):
+        """
+        Going through the board rows
+        For each row returning a generator with new possible states after setting 0 element to current player
+        """
+        for i in range(len(state)):
+            for j in range(len(state[0])):
+                if state[i][j] == 0:
+                    yield state[0:i] + [state[i][0:j] + [current_player] + state[i][j + 1:]] + state[i + 1:]
+
+
+class MonteCarlo:
+    """
+    https://www.youtube.com/watch?v=UXW2yZndl7U
+    1. tree traversal UCB1
+    2. node expansion
+    3. rollout (random simulation)
+    4. backpropagation
+    """
+    def __init__(self, game, exploration_constant=1.4, num_simulations=10):
+        self.game = game

@@ -1,17 +1,3 @@
-class AgentState:
-
-    def __init__(self, playerNum):
-        self.playerNum = playerNum
-
-    def __str__(self):
-        return "Player " + self.playerNum
-
-
-class Actions:
-    def __init__(self, piles, maxPicks):
-        pass
-
-
 class MiniMaxAgent:
 
     def minimax(self, state, is_maximizing):
@@ -30,12 +16,19 @@ class MiniMaxAgent:
                 break
         return score, new_state
 
+
     def evaluate(self, state, is_maximizing):
         if all(counters == 0 for counters in state):
             return 1 if is_maximizing else -1
         return None
 
+
     def possible_new_states(self, state):
+        """
+        For each pile there is a possibility of taking 1 to all remaining counters
+        :param state: current game state
+        :return: generator with all possible new states
+        """
         for pile, counters in enumerate(state):
             for remain in range(counters):
                 yield state[:pile] + [remain] + state[pile + 1:]
