@@ -27,7 +27,7 @@ class MiniMaxAgent:
                 break
         print("SCORE:", score)
         print("NEW STATE:", new_state)
-        return score, new_state
+        return score, new_state, x, y
 
 
     def evaluate(self, state, is_maximizing, y, x):

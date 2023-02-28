@@ -113,20 +113,23 @@ class HexGame:
     def play(self):
         agent = MiniMaxAgent(self)
         current_player = 1
-        x, y = -1, -1
+        current_player = 2 if current_player == 1 else 1
+        print(current_player)
+        _, self.board.board, x, y = agent.best_move(self.board.board, current_player)
+        self.board.print_board()
         while not self.board.check_win(x, y, self.board.board):
             self.board.print_board()
-            print("another one")
             x, y = input(f'Player {current_player} turn. Enter x and y between 0-{self.board.size - 1}: ').split()
-            while int(x) > self.board.size - 1 or int(y) > self.board.size - 1:
+            while (int(x) > self.board.size - 1 or int(y) > self.board.size - 1) and not self.board.check_win(x, y, self.board.board):
                 x, y = input(f'Player {current_player} turn. Enter x and y between 0-{self.board.size - 1}: ').split()
             x = int(x)
             y = int(y)
+            current_player = 2 if current_player == 1 else 1
             if self.board.place_piece(x, y, current_player):
+                self.board.print_board()
                 current_player = 2 if current_player == 1 else 1
                 print(current_player)
-                _, self.board.board = agent.best_move(self.board.board, current_player)
-                print("board", self.board.board)
+                _, self.board.board, x, y = agent.best_move(self.board.board, current_player)
             else:
                 print('Place already filled, try again.')
 
