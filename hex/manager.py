@@ -1,6 +1,7 @@
 import math
 import numpy as np
 from nn.neuralNet import NeuralNet
+from hex import HexBoard
 
 def possible_new_states(state, current_player):
     """
@@ -49,8 +50,29 @@ class MiniMaxAgent:
             return -1 if is_maximizing else 1
         return None
 
-class MonteCarloNode:
 
+class Node:
+    def __init__(self, move=None, parent=None):
+        self.move = move
+        self.parent = parent
+        self.children = []
+        self.N = 0
+        self.Q = 0
+        self.winner = None
+
+    def add_children(self, children):
+        self.children += children
+
+    def set_winner(self, winner):
+        self.winner = winner
+
+    def get_N(self):
+        return self.N
+
+    def get_Q(self):
+        return self.Q
+
+class MonteCarlo:
     """
     https://www.youtube.com/watch?v=UXW2yZndl7U
     1. tree traversal UCB1
@@ -59,11 +81,11 @@ class MonteCarloNode:
     4. backpropagation
     """
 
-    def __init__(self, root, c=1, num_simulations=10):
+    def __init__(self, game: HexGame, root: Node, c=1, num_simulations=10):
+        self.game = game
         self.root = root
         self.state = {}
         self.action_states = {}
-        self.childre = {}
         self.c = c
 
 
@@ -72,8 +94,10 @@ class MonteCarloNode:
     These appear on the edges between tree nodes.
     Over time (many expansions, rollouts and backpropagations), these Q values approach those found by Minimax.
     """
-    def get_q_value(self):
-        return 1
+    def get_q_value(self, action: Node):
+        if action == None:
+            return self.root.get_Q()
+        return action.get_Q()
 
     """
     with N(s,a) = number of times branch (s,a) has been traversed, and
@@ -83,8 +107,9 @@ class MonteCarloNode:
     def get_n_value(self, state, action=None):
         # n value is depended on action value definition
         if action:
-            return 2
-        return 1
+            if action in self.root.children:
+                return action.get_N()
+        return self.root.get_N()
 
     """
     random component. should probably move possible_new_states to game class
@@ -111,9 +136,22 @@ class MonteCarloNode:
             return np.inf
         return self.c * np.sqrt(np.log(self.get_n_value(state) / (1 + self.get_n_value(state, action))))
 
-    def choose_branch(self, state, action):
+    def choose_branch_max(self, state, action):
         return self.get_q_value() + self.exploration_bonus(state, action)
+
+    def choose_branch_min(self, state, action):
+        return self.get_q_value() - self.exploration_bonus(state, action)
 
     def traverse(self):
         #TODO how tf to traverse
         pass
+
+    def expand(self, state, parent: Node):
+        if (False):
+            return 0
+        children = []
+        for move in self.game.check_win(0, 0, state):
+            children.appen(Node(move, parent))
+        parent.add_children(children)
+        return True
+
