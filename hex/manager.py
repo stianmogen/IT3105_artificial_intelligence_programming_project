@@ -49,8 +49,6 @@ class MiniMaxAgent:
             return -1 if is_maximizing else 1
         return None
 
-
-
 class MonteCarloNode:
 
     """
@@ -61,8 +59,11 @@ class MonteCarloNode:
     4. backpropagation
     """
 
-    def __init__(self, state, c=1, num_simulations=10):
-        self.state = state
+    def __init__(self, root, c=1, num_simulations=10):
+        self.root = root
+        self.state = {}
+        self.action_states = {}
+        self.childre = {}
         self.c = c
 
 
@@ -109,3 +110,10 @@ class MonteCarloNode:
         if self.get_n_value(state) == 0:
             return np.inf
         return self.c * np.sqrt(np.log(self.get_n_value(state) / (1 + self.get_n_value(state, action))))
+
+    def choose_branch(self, state, action):
+        return self.get_q_value() + self.exploration_bonus(state, action)
+
+    def traverse(self):
+        #TODO how tf to traverse
+        pass
