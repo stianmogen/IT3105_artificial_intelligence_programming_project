@@ -149,4 +149,4 @@ class HexGame:
 
 
 if __name__ == "__main__":
-    HexGame(4).play()
+    HexGame(3).play()

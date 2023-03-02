@@ -1,3 +1,7 @@
+import math
+import numpy as np
+from nn.neuralNet import NeuralNet
+
 def possible_new_states(state, current_player):
     """
     Going through the board rows
@@ -46,7 +50,9 @@ class MiniMaxAgent:
         return None
 
 
-class MonteCarlo:
+
+class MonteCarloNode:
+
     """
     https://www.youtube.com/watch?v=UXW2yZndl7U
     1. tree traversal UCB1
@@ -55,5 +61,51 @@ class MonteCarlo:
     4. backpropagation
     """
 
-    def __init__(self, game, exploration_constant=1.4, num_simulations=10):
-        self.game = game
+    def __init__(self, state, c=1, num_simulations=10):
+        self.state = state
+        self.c = c
+
+
+    """
+    Q(s,a) = value (expected final result) of doing action a from state s.
+    These appear on the edges between tree nodes.
+    Over time (many expansions, rollouts and backpropagations), these Q values approach those found by Minimax.
+    """
+    def get_q_value(self):
+        return 1
+
+    """
+    with N(s,a) = number of times branch (s,a) has been traversed, and
+    P(s,a) = prior probability p(a | s). In AlphaGo, these P(s,a) come from
+    the Actor-SL neural network (trained on a database of expert moves).
+    """
+    def get_n_value(self, state, action=None):
+        # n value is depended on action value definition
+        if action:
+            return 2
+        return 1
+
+    """
+    random component. should probably move possible_new_states to game class
+    potentially 
+    """
+    def get_random_action(self):
+        pass
+
+    def evaluate(self, state):
+        # something along these lines
+        return NeuralNet.predict(state)
+
+    def rollout(self, state):
+        # best action chosen for the rollout, based on predictions from evaluate
+        pred = self.evaluate(state)
+        return NeuralNet.best_action(pred)
+
+    """
+    we will use Upper Confidence Bound (UCT)
+    u(s,a) = c * sqrt ( log(N(s)) / ( 1 + N(s,a) ) )
+    """
+    def exploration_bonus(self, state, action):
+        if self.get_n_value(state) == 0:
+            return np.inf
+        return self.c * np.sqrt(np.log(self.get_n_value(state) / (1 + self.get_n_value(state, action))))
