@@ -1,6 +1,7 @@
 import copy
 
 from manager import MiniMaxAgent
+from gameState import GameState
 
 
 class HexBoard:
@@ -112,40 +113,37 @@ class HexBoard:
 
 class HexGame:
     def __init__(self, size):
-        self.board = HexBoard(size)
+        self.board = GameState(size)
 
     def play(self):
-        agent = MiniMaxAgent(self)
+        agent = MiniMaxAgent(self.board)
 
         self.board.print_board()
-        current_player = 1
 
-        _, _, y, x = agent.best_move(self.board.board, current_player)
-        self.board.place_piece(y, x, current_player)
+        _, _, y, x = agent.best_move()
+        self.board.place_piece(y, x)
         self.board.print_board()
-        while not self.board.finished:
-            y, x = input(f'Player {current_player} turn. Enter y and x between 0-{self.board.size - 1}: ').split()
+        while not self.board.winner:
+            y, x = input(f'Player {self.board.current_player} turn. Enter y and x between 0-{self.board.size - 1}: ').split()
 
             while not (0 <= int(x) <= self.board.size - 1 and 0 <= int(y) <= self.board.size - 1):
-                y, x = input(f'Player {current_player} turn. Enter y and x between 0-{self.board.size - 1}: ').split()
+                y, x = input(f'Player {self.board.current_player} turn. Enter y and x between 0-{self.board.size - 1}: ').split()
             x = int(x)
             y = int(y)
 
-            current_player = 2 if current_player == 1 else 1
-            if self.board.place_piece(y, x, current_player):
+            if self.board.place_piece(y, x):
                 self.board.print_board()
 
-                current_player = 2 if current_player == 1 else 1
-                _, _, y, x = agent.best_move(self.board.board, current_player)
+                _, _, y, x = agent.best_move()
                 print(y, x)
-                self.board.place_piece(y, x, current_player)
+                self.board.place_piece(y, x)
                 print(self.board.board)
                 self.board.print_board()
             else:
                 print('Place already filled, try again.')
 
         self.board.print_board()
-        print(f'Player {current_player} wins!')
+        print(f'Player {self.board.winner} wins!')
 
 
 if __name__ == "__main__":

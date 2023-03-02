@@ -1,31 +1,33 @@
 import math
 import numpy as np
 from nn.neuralNet import NeuralNet
-from hex import HexBoard
+from gameState import GameState
+import copy
 
-def possible_new_states(state, current_player):
+
+def possible_new_states(state):
     """
     Going through the board rows
     For each row returning a generator with new possible states after setting 0 element to current player
     """
-    for y in range(len(state)):
-        for x in range(len(state[0])):
-            if state[y][x] == 0:
-                yield state[0:y] + [state[y][0:x] + [current_player] + state[y][x + 1:]] + state[y + 1:], y, x
+
+    for y, x in state.possible_moves():
+        new_state = copy.deepcopy(state)
+        new_state.place_piece(y, x)
+        yield new_state, y, x
 
 
 class MiniMaxAgent:
 
-    def __init__(self, game):
-        self.game = game
+    def __init__(self, state):
+        self.state = state
 
-    def minimax(self, state, current_player, is_maximizing, y, x):
-        if (score := self.evaluate(state, is_maximizing, y, x)) is not None:
+    def minimax(self, state, is_maximizing):
+        if (score := self.evaluate(state, is_maximizing)) is not None:
             return score
         return (max if is_maximizing else min)(
-            self.minimax(new_state, current_player=1 if current_player == 2 else 2, is_maximizing=not is_maximizing,
-                         y=y, x=x)
-            for new_state, y, x in possible_new_states(state, current_player=current_player)
+            self.minimax(new_state, is_maximizing=not is_maximizing)
+            for new_state, _, _ in possible_new_states(state)
         )
 
     """
@@ -38,16 +40,19 @@ class MiniMaxAgent:
     :return: positive score with a new state if win is secured or 0 and the last state if not
     """
 
-    def best_move(self, state, current_player):
-        for new_state, y, x in possible_new_states(state, current_player):
-            score = self.minimax(new_state, 1 if current_player == 2 else 2, is_maximizing=False, y=y, x=x)
+    def best_move(self):
+        state = copy.deepcopy(self.state)
+        for new_state, y, x in possible_new_states(state):
+            score = self.minimax(new_state, is_maximizing=False)
             if score > 0:
                 break
         return score, new_state, y, x
 
-    def evaluate(self, state, is_maximizing, y, x):
-        if self.game.board.check_win(y, x, state):
-            return -1 if is_maximizing else 1
+    def evaluate(self, state, is_maximizing):
+        if state.winner is not None:
+            return 1 if is_maximizing else -1
+        elif not state.possible_moves():
+            return 0
         return None
 
 
@@ -81,7 +86,7 @@ class MonteCarlo:
     4. backpropagation
     """
 
-    def __init__(self, game: HexGame, root: Node, c=1, num_simulations=10):
+    def __init__(self, game: GameState, root: Node, c=1, num_simulations=10):
         self.game = game
         self.root = root
         self.state = {}
@@ -147,7 +152,7 @@ class MonteCarlo:
         pass
 
     def expand(self, state, parent: Node):
-        if (False):
+        if self.game.winner:
             return 0
         children = []
         for move in self.game.check_win(0, 0, state):
