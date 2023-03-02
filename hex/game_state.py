@@ -19,9 +19,11 @@ class GameState:
         self.neighbor_patterns = [(1, 0), (0, 1), (-1, 0), (0, -1), (1, -1), (-1, 1)]
         self.empty_spaces = set((y, x) for x in range(size) for y in range(size))
 
+
     def place_piece(self, y, x):
         if not self.board[y][x]:
             self.board[y][x] = self.current_player.value
+            self.last_move = (y, x)
             self.empty_spaces.remove((y, x))
             if self.check_win(y, x):
                 self.winner = self.current_player.value
