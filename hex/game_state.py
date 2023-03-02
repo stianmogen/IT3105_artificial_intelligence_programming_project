@@ -1,35 +1,39 @@
 import copy
+from enum import Enum
+
 import numpy as np
+
+
+class Player(Enum):
+    WHITE = 1
+    BLACK = 2
 
 
 class GameState:
     def __init__(self, size):
         self.size = size
-
-        self.players = {'nobody': 0, 'white': 1, 'black': 2}
-        self.current_player = self.players['white']
-
-        self.board = np.array([[self.players['nobody'] for _ in range(size)] for _ in range(size)])
+        self.current_player = Player.WHITE
+        self.board = np.zeros((size, size), dtype=int)
         self.column_names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         self.winner = None
-        self.neighbor_patterns = [(1,- 0), (0, -1), (1, 0), (0, 1), (1, -1), (-1, 1)]
+        self.neighbor_patterns = [(1, 0), (0, 1), (-1, 0), (0, -1), (1, -1), (-1, 1)]
+        self.empty_spaces = set((y, x) for x in range(size) for y in range(size))
 
     def place_piece(self, y, x):
-        if self.board[y][x] == self.players['nobody']:
-            self.board[y][x] = self.current_player
+        if not self.board[y][x]:
+            self.board[y][x] = self.current_player.value
+            self.empty_spaces.remove((y, x))
             if self.check_win(y, x):
-                self.winner = self.current_player
-            self.current_player = self.players['white'] if self.current_player == self.players['black'] else self.players['black']
+                self.winner = self.current_player.value
+            elif len(self.empty_spaces) == 0:
+                self.winner = -1
+            self.current_player = Player.WHITE if self.current_player == Player.BLACK else Player.BLACK
             return True
         return False
 
     def neighbours(self, y, x):
         return [(y + y_, x + x_) for y_, x_ in self.neighbor_patterns if
-                (0 <= (y + y_) < self.size) & (0 <= (x + x_) < self.size)]
-
-    def possible_moves(self):
-        return [(y, x) for x in range(self.size) for y in range(self.size) if
-                self.board[y, x] == self.players['nobody']]
+                (0 <= (y + y_) < self.size) and (0 <= (x + x_) < self.size)]
 
     def reach_left(self, y, x, blocked):
         if x == 0:
@@ -79,10 +83,11 @@ class GameState:
         player = self.board[y][x]
         blocked = [[False if self.board[i][j] == player else True for j in range(self.size)] for i in range(self.size)]
 
-        if player == self.players['white']:
-            return self.reach_left(y, x, copy.deepcopy(blocked)) & self.reach_right(y, x, copy.deepcopy(blocked))
-        else:
-            return self.reach_top(y, x, copy.deepcopy(blocked)) & self.reach_bottom(y, x, copy.deepcopy(blocked))
+        if player == Player.WHITE.value:
+            return self.reach_left(y, x, list(blocked)) and self.reach_right(y, x, list(blocked))
+        elif player == Player.BLACK.value:
+            return self.reach_top(y, x, list(blocked)) and self.reach_bottom(y, x, list(blocked))
+        return False
 
     def print_board(self):
         rows = self.size

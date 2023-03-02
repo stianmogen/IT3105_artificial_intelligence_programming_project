@@ -1,58 +1,44 @@
 import math
 import numpy as np
 from nn.neuralNet import NeuralNet
-from gameState import GameState
+from game_state import GameState
 import copy
 
 
 def possible_new_states(state):
-    """
-    Going through the board rows
-    For each row returning a generator with new possible states after setting 0 element to current player
-    """
-
-    for y, x in state.possible_moves():
+    for y, x in state.empty_spaces:
         new_state = copy.deepcopy(state)
         new_state.place_piece(y, x)
-        yield new_state, y, x
+        yield new_state
 
 
 class MiniMaxAgent:
 
-    def __init__(self, state):
+    def __init__(self, state: GameState):
         self.state = state
 
     def minimax(self, state, is_maximizing):
-        if (score := self.evaluate(state, is_maximizing)) is not None:
+        if (score := self.evaluate(state)) is not None:
             return score
         return (max if is_maximizing else min)(
             self.minimax(new_state, is_maximizing=not is_maximizing)
-            for new_state, _, _ in possible_new_states(state)
+            for new_state in possible_new_states(state)
         )
 
-    """
-    Finding the best move for the current player 
-    Generating new possible states from the current situation
-    Based on each new state checking minmax of that move
-    Changing player to the other because it is the other players turn
-    :param state: current game state
-    :param current_player: the player that is going to make a move
-    :return: positive score with a new state if win is secured or 0 and the last state if not
-    """
-
     def best_move(self):
-        state = copy.deepcopy(self.state)
-        for new_state, y, x in possible_new_states(state):
+        for y, x in self.state.empty_spaces:
+            new_state = copy.deepcopy(self.state)
+            new_state.place_piece(y, x)
             score = self.minimax(new_state, is_maximizing=False)
             if score > 0:
                 break
-        return score, new_state, y, x
+        return y, x
 
-    def evaluate(self, state, is_maximizing):
+    def evaluate(self, state):
         if state.winner is not None:
-            return 1 if is_maximizing else -1
-        elif not state.possible_moves():
-            return 0
+            if state.winner == -1:
+                return 0
+            return 1 if self.state.current_player.value == state.winner else -1
         return None
 
 
