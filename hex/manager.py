@@ -6,7 +6,7 @@ from sys import stderr
 
 import numpy as np
 from nn.neuralNet import NeuralNet
-from game_state import GameState, Player
+from game_state import HexGameState, Player
 import copy
 
 
@@ -19,7 +19,7 @@ def possible_new_states(state):
 
 class MiniMaxAgent:
 
-    def __init__(self, state: GameState):
+    def __init__(self, state: HexGameState):
         self.state = state
 
     def minimax(self, state, is_maximizing):
@@ -74,7 +74,7 @@ class Node:
 
 class MCTSAgent:
 
-    def __init__(self, state: GameState, exploration=1):
+    def __init__(self, state: HexGameState, exploration=1):
         self.rootstate = copy.deepcopy(state)
         self.root = Node()
         self.exploration = exploration
@@ -154,7 +154,7 @@ class MCTSAgent:
     def expand(self, parent, state):
         """
         Generate the children of the passed "parent" node based on the available
-        moves in the passed gamestate and add them to the tree.
+        moves in the passed HexGameState and add them to the tree.
         """
         children = []
         if state.winner != None:
@@ -167,7 +167,7 @@ class MCTSAgent:
         parent.add_children(children)
         return True
 
-    def roll_out(self, state: GameState):
+    def roll_out(self, state: HexGameState):
         moves = state.empty_spaces
 
         while state.winner == 0:
@@ -192,7 +192,7 @@ class MCTSAgent:
             reward = -reward
             node = node.parent
 
-    def set_gamestate(self, state):
+    def set_HexGameState(self, state):
         self.rootstate = copy.deepcopy(state)
         self.root = Node()
 
@@ -220,7 +220,7 @@ class MonteCarlo:
     4. backpropagation
     """
 
-    def __init__(self, game: GameState, root: Node, c=1, num_simulations=10):
+    def __init__(self, game: HexGameState, root: Node, c=1, num_simulations=10):
         self.game = game
         self.root = root
         self.state = {}
