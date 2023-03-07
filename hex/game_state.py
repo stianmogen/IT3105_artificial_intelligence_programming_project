@@ -11,7 +11,33 @@ class Player(Enum):
     BLACK = 2
 
 
-class GameState:
+class DisjointSet:
+    def __init__(self, size):
+        self.parent = [-1] * size
+        self.rank = [0] * size
+
+    def make_set(self, element):
+        self.parent[element] = element
+        self.rank[element] = 0
+
+    def find(self, element):
+        if self.parent[element] == element:
+            return element
+        self.parent[element] = self.find(self.parent[element])
+        return self.parent[element]
+
+    def union(self, element1, element2):
+        root1 = self.find(element1)
+        root2 = self.find(element2)
+
+        if root1 != root2:
+            if self.rank[root1] < self.rank[root2]:
+                root1, root2 = root2, root1
+            self.parent[root2] = root1
+            if self.rank[root1] == self.rank[root2]:
+                self.rank[root1] += 1
+
+class HexGameState:
     def __init__(self, size):
         self.size = size
         self.current_player = Player.WHITE
@@ -35,6 +61,7 @@ class GameState:
     def place_piece(self, y, x):
         if not self.board[y][x]:
             self.board[y][x] = self.current_player.value
+            self.last_move = (y, x)
             self.empty_spaces.remove((y, x))
             if self.check_win(y, x):
                 self.winner = self.current_player.value
@@ -42,6 +69,17 @@ class GameState:
                 self.winner = -1
             self.current_player = Player.WHITE if self.current_player == Player.BLACK else Player.BLACK
             return True
+        return False
+
+    def check_win(self, y, x):
+        player = self.board[y][x]
+        node = y * self.size + x + 1
+        if player == Player.WHITE.value:
+            return self.dset.find(node) == self.dset.find(0) and self.dset.find(node) == self.dset.find(
+                self.size * self.size + 1)
+        elif player == Player.BLACK.value:
+            return self.dset.find(node) == self.dset.find(0) and self.dset.find(node) == self.dset.find(
+                self.size * (self.size - 1) + 1)
         return False
 
     def neighbours(self, y, x):

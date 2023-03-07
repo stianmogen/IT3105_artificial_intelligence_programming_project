@@ -1,19 +1,23 @@
-from game_state import GameState
-from manager import MiniMaxAgent
+from game_state import HexGameState
+from manager import MCTSAgent
 
 
 class HexGame:
     def __init__(self, size):
-        self.board = GameState(size)
+        self.board = HexGameState(size)
 
     def play(self):
-        agent = MiniMaxAgent(self.board)
+        agent = MCTSAgent(self.board)
 
         self.board.print_board()
 
+        agent.search(10)
         y, x = agent.best_move()
         self.board.place_piece(y, x)
         self.board.print_board()
+
+        agent.move((y, x))
+
         while not self.board.winner:
             y, x = input(f'Player {self.board.current_player} turn. Enter y and x between 0-{self.board.size - 1}: ').split()
 
@@ -25,13 +29,16 @@ class HexGame:
             if self.board.place_piece(y, x):
                 self.board.print_board()
 
-                y, x = agent.best_move()
-                self.board.place_piece(y, x)
-                self.board.print_board()
+                if not self.board.winner:
+                    agent.move((y, x))
+                    agent.search(10)
+                    y, x = agent.best_move()
+                    self.board.place_piece(y, x)
+                    agent.move((y, x))
+                    self.board.print_board()
             else:
                 print('Place already filled, try again.')
 
-        self.board.print_board()
         print(f'Player {self.board.winner} wins!')
 
 
