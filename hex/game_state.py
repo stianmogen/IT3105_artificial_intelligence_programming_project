@@ -9,7 +9,33 @@ class Player(Enum):
     BLACK = 2
 
 
-class GameState:
+class DisjointSet:
+    def __init__(self, size):
+        self.parent = [-1] * size
+        self.rank = [0] * size
+
+    def make_set(self, element):
+        self.parent[element] = element
+        self.rank[element] = 0
+
+    def find(self, element):
+        if self.parent[element] == element:
+            return element
+        self.parent[element] = self.find(self.parent[element])
+        return self.parent[element]
+
+    def union(self, element1, element2):
+        root1 = self.find(element1)
+        root2 = self.find(element2)
+
+        if root1 != root2:
+            if self.rank[root1] < self.rank[root2]:
+                root1, root2 = root2, root1
+            self.parent[root2] = root1
+            if self.rank[root1] == self.rank[root2]:
+                self.rank[root1] += 1
+
+class HexGameState:
     def __init__(self, size):
         self.size = size
         self.current_player = Player.WHITE
@@ -18,7 +44,21 @@ class GameState:
         self.winner = None
         self.neighbor_patterns = [(1, 0), (0, 1), (-1, 0), (0, -1), (1, -1), (-1, 1)]
         self.empty_spaces = set((y, x) for x in range(size) for y in range(size))
+        self.last_move = None
+        self.dset = DisjointSet(size * size + 2) # +2 for the dummy nodes
 
+        for i in range(size):
+            for j in range(size):
+                node = i * size + j + 1
+                if i == 0:
+                    self.dset.union(node, 0) # connect to left dummy node
+                elif i == size - 1:
+                    self.dset.union(node, size * size + 1) # connect to right dummy node
+
+                for y_, x_ in self.neighbor_patterns:
+                    if 0 <= i + y_ < size and 0 <= j + x_ < size:
+                        neighbor = (i + y_) * size + (j + x_) + 1
+                        self.dset.union(node, neighbor)
 
     def place_piece(self, y, x):
         if not self.board[y][x]:
@@ -31,6 +71,17 @@ class GameState:
                 self.winner = -1
             self.current_player = Player.WHITE if self.current_player == Player.BLACK else Player.BLACK
             return True
+        return False
+
+    def check_win(self, y, x):
+        player = self.board[y][x]
+        node = y * self.size + x + 1
+        if player == Player.WHITE.value:
+            return self.dset.find(node) == self.dset.find(0) and self.dset.find(node) == self.dset.find(
+                self.size * self.size + 1)
+        elif player == Player.BLACK.value:
+            return self.dset.find(node) == self.dset.find(0) and self.dset.find(node) == self.dset.find(
+                self.size * (self.size - 1) + 1)
         return False
 
     def neighbours(self, y, x):

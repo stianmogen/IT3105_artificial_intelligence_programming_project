@@ -1,10 +1,10 @@
-from game_state import GameState
+from game_state import HexGameState
 from manager import MCTSAgent
 
 
 class HexGame:
     def __init__(self, size):
-        self.board = GameState(size)
+        self.board = HexGameState(size)
 
     def play(self):
         agent = MCTSAgent(self.board)
