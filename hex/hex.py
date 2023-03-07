@@ -36,4 +36,4 @@ class HexGame:
 
 
 if __name__ == "__main__":
-    HexGame(3).play()
+    HexGame(4).play()

@@ -3,6 +3,8 @@ from enum import Enum
 
 import numpy as np
 
+from disjoint_set import DisjointSet
+
 
 class Player(Enum):
     WHITE = 1
@@ -18,6 +20,17 @@ class GameState:
         self.winner = None
         self.neighbor_patterns = [(1, 0), (0, 1), (-1, 0), (0, -1), (1, -1), (-1, 1)]
         self.empty_spaces = set((y, x) for x in range(size) for y in range(size))
+        self.left_right = DisjointSet(size * size + 2)
+        self.top_bottom = DisjointSet(size * size + 2)
+
+        for i in range(size):
+            self.top_bottom.union(size * size, i)
+            self.top_bottom.union(size * size + 1, size * size - 1 - i)
+            self.left_right.union(size * size, i * size)
+            self.left_right.union(size * size + 1, i * size + size - 1)
+
+        print(self.top_bottom.parent.values())
+        print(self.left_right.parent.values())
 
     def place_piece(self, y, x):
         if not self.board[y][x]:
@@ -35,58 +48,19 @@ class GameState:
         return [(y + y_, x + x_) for y_, x_ in self.neighbor_patterns if
                 (0 <= (y + y_) < self.size) and (0 <= (x + x_) < self.size)]
 
-    def reach_left(self, y, x, blocked):
-        if x == 0:
-            return True
-
-        blocked[y][x] = True
-        for y_, x_ in self.neighbours(y, x):
-            if not blocked[y_][x_] and self.reach_left(y_, x_, blocked):
-                return True
-
-        return False
-
-    def reach_right(self, y, x, blocked):
-        if x == len(blocked[0]) - 1:
-            return True
-
-        blocked[y][x] = True
-        for y_, x_ in self.neighbours(y, x):
-            if not blocked[y_][x_] and self.reach_right(y_, x_, blocked):
-                return True
-
-        return False
-
-    def reach_top(self, y, x, blocked):
-        if y == 0:
-            return True
-
-        blocked[y][x] = True
-        for y_, x_ in self.neighbours(y, x):
-            if not blocked[y_][x_] and self.reach_top(y_, x_, blocked):
-                return True
-
-        return False
-
-    def reach_bottom(self, y, x, blocked):
-        if y == len(blocked) - 1:
-            return True
-
-        blocked[y][x] = True
-        for y_, x_ in self.neighbours(y, x):
-            if not blocked[y_][x_] and self.reach_bottom(y_, x_, blocked):
-                return True
-
-        return False
-
     def check_win(self, y, x):
         player = self.board[y][x]
-        blocked = [[False if self.board[i][j] == player else True for j in range(self.size)] for i in range(self.size)]
 
         if player == Player.WHITE.value:
-            return self.reach_left(y, x, list(blocked)) and self.reach_right(y, x, list(blocked))
+            for y_, x_ in self.neighbours(y, x):
+                if self.board[y_][x_] == player:
+                    self.left_right.union(y_ * self.size + x_, y * self.size + x)
+            return self.left_right.connected(self.size * self.size, self.size * self.size + 1)
         elif player == Player.BLACK.value:
-            return self.reach_top(y, x, list(blocked)) and self.reach_bottom(y, x, list(blocked))
+            for y_, x_ in self.neighbours(y, x):
+                if self.board[y_][x_] == player:
+                    self.top_bottom.union(y_ * self.size + x_, y * self.size + x)
+            return self.top_bottom.connected(self.size * self.size, self.size * self.size + 1)
         return False
 
     def print_board(self):
@@ -114,3 +88,6 @@ class GameState:
             indent += 2
         headings = " " * (indent - 2) + headings
         print(headings)
+
+if __name__ == '__main__':
+    state = GameState(size=3)
