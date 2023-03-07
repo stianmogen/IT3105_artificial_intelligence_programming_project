@@ -1,4 +1,3 @@
-import copy
 from enum import Enum
 
 import numpy as np
@@ -11,38 +10,13 @@ class Player(Enum):
     BLACK = 2
 
 
-class DisjointSet:
-    def __init__(self, size):
-        self.parent = [-1] * size
-        self.rank = [0] * size
-
-    def make_set(self, element):
-        self.parent[element] = element
-        self.rank[element] = 0
-
-    def find(self, element):
-        if self.parent[element] == element:
-            return element
-        self.parent[element] = self.find(self.parent[element])
-        return self.parent[element]
-
-    def union(self, element1, element2):
-        root1 = self.find(element1)
-        root2 = self.find(element2)
-
-        if root1 != root2:
-            if self.rank[root1] < self.rank[root2]:
-                root1, root2 = root2, root1
-            self.parent[root2] = root1
-            if self.rank[root1] == self.rank[root2]:
-                self.rank[root1] += 1
-
 class HexGameState:
     def __init__(self, size):
         self.size = size
         self.current_player = Player.WHITE
         self.board = np.zeros((size, size), dtype=int)
         self.column_names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        self.last_move = None
         self.winner = None
         self.neighbor_patterns = [(1, 0), (0, 1), (-1, 0), (0, -1), (1, -1), (-1, 1)]
         self.empty_spaces = set((y, x) for x in range(size) for y in range(size))
@@ -55,9 +29,6 @@ class HexGameState:
             self.left_right.union(size * size, i * size)
             self.left_right.union(size * size + 1, i * size + size - 1)
 
-        print(self.top_bottom.parent.values())
-        print(self.left_right.parent.values())
-
     def place_piece(self, y, x):
         if not self.board[y][x]:
             self.board[y][x] = self.current_player.value
@@ -69,17 +40,6 @@ class HexGameState:
                 self.winner = -1
             self.current_player = Player.WHITE if self.current_player == Player.BLACK else Player.BLACK
             return True
-        return False
-
-    def check_win(self, y, x):
-        player = self.board[y][x]
-        node = y * self.size + x + 1
-        if player == Player.WHITE.value:
-            return self.dset.find(node) == self.dset.find(0) and self.dset.find(node) == self.dset.find(
-                self.size * self.size + 1)
-        elif player == Player.BLACK.value:
-            return self.dset.find(node) == self.dset.find(0) and self.dset.find(node) == self.dset.find(
-                self.size * (self.size - 1) + 1)
         return False
 
     def neighbours(self, y, x):
@@ -126,6 +86,3 @@ class HexGameState:
             indent += 2
         headings = " " * (indent - 2) + headings
         print(headings)
-
-if __name__ == '__main__':
-    state = GameState(size=3)
