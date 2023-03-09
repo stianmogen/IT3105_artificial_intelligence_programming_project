@@ -3,6 +3,7 @@ import random
 import time
 from queue import Queue
 from sys import stderr
+from player import PlayerInterface
 
 import numpy as np
 
@@ -32,15 +33,20 @@ class Node:
         self.children += children
 
 
-class MCTSAgent:
+class MCTSAgent(PlayerInterface):
 
     def __init__(self, state: HexGameState, exploration=1):
-        self.rootstate = state
+        self.rootstate = copy.deepcopy(state)
         self.root = Node()
         self.exploration = exploration
 
+    def get_move(self):
+        self.search(60)
+        y, x = self.best_move()
+        return y, x
+
+
     def best_move(self):
-        print(self.root.children)
         if self.rootstate.winner is not None:
             return None
 
@@ -57,21 +63,17 @@ class MCTSAgent:
 
         startTime = time.perf_counter()
         num_rollouts = 0
-        # do until we exceed our time budget
+
         while time.perf_counter() - startTime < time_budget:
 
-            start_select_node = time.perf_counter()
             node, state = self.select_node()
-            duration_select_node = time.perf_counter() - start_select_node
 
-            turn = state.current_player
             outcome = self.roll_out(state)
 
+            turn = state.current_player
             self.backup(node, turn, outcome)
 
             num_rollouts += 1
-
-            #print(f"select_node: {duration_select_node:.5f} s")
 
         stderr.write("Ran " + str(num_rollouts) + " rollouts in " + \
                      str(time.perf_counter() - startTime) + " sec\n")
