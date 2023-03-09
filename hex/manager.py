@@ -35,16 +35,16 @@ class Node:
 
 class MCTSAgent(PlayerInterface):
 
-    def __init__(self, state: HexGameState, exploration=1):
-        self.rootstate = copy.deepcopy(state)
+    def __init__(self, state: HexGameState, exploration=1, time_budget=5):
+        self.rootstate = state
         self.root = Node()
         self.exploration = exploration
+        self.time_budget = time_budget
 
     def get_move(self):
-        self.search(60)
+        self.search(self.time_budget)
         y, x = self.best_move()
         return y, x
-
 
     def best_move(self):
         if self.rootstate.winner is not None:
@@ -139,9 +139,12 @@ class MCTSAgent(PlayerInterface):
         """
         # note that reward is calculated for player who just played
         # at the node and not the next player to play
-        reward = -1 if outcome == turn else 1
-
-        while node != None:
+        if outcome == -1:
+            reward = 0
+        else:   
+            reward = -1 if outcome == turn else 1
+        
+        while node is not None:
             node.N += 1
             node.Q += reward
             reward = -reward
