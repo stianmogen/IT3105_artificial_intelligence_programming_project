@@ -1,6 +1,7 @@
 from collections import namedtuple, deque
 import random
 
+
 # https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
 class ReplayBuffer:
 
@@ -15,7 +16,9 @@ class ReplayBuffer:
             self.memory = self.memory[1:]
         self.memory.append(case)
 
-
     def sample(self, batch_size):
         # sample method might
         return random.sample(self.memory, batch_size)
+
+    def __len__(self):
+        return len(self.memory)
