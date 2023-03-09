@@ -1,19 +1,12 @@
-from enum import Enum
-
 import numpy as np
 
 from disjoint_set import DisjointSet
 
 
-class Player(Enum):
-    WHITE = 1
-    BLACK = 2
-
-
 class HexGameState:
     def __init__(self, size):
         self.size = size
-        self.current_player = Player.WHITE
+        self.current_player = 1
         self.board = np.zeros((size, size), dtype=int)
         self.column_names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         self.last_move = None
@@ -31,14 +24,14 @@ class HexGameState:
 
     def place_piece(self, y, x):
         if not self.board[y][x]:
-            self.board[y][x] = self.current_player.value
+            self.board[y][x] = self.current_player
             self.last_move = (y, x)
             self.empty_spaces.remove((y, x))
             if self.check_win(y, x):
-                self.winner = self.current_player.value
+                self.winner = self.current_player
             elif len(self.empty_spaces) == 0:
                 self.winner = -1
-            self.current_player = Player.WHITE if self.current_player == Player.BLACK else Player.BLACK
+            self.current_player = 1 if self.current_player == 2 else 2
             return True
         return False
 
@@ -49,12 +42,12 @@ class HexGameState:
     def check_win(self, y, x):
         player = self.board[y][x]
 
-        if player == Player.WHITE.value:
+        if player == 1:
             for y_, x_ in self.neighbours(y, x):
                 if self.board[y_][x_] == player:
                     self.left_right.union(y_ * self.size + x_, y * self.size + x)
             return self.left_right.connected(self.size * self.size, self.size * self.size + 1)
-        elif player == Player.BLACK.value:
+        elif player == 2:
             for y_, x_ in self.neighbours(y, x):
                 if self.board[y_][x_] == player:
                     self.top_bottom.union(y_ * self.size + x_, y * self.size + x)
