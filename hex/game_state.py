@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 
 from disjoint_set import DisjointSet
@@ -53,6 +55,9 @@ class HexGameState:
                     self.top_bottom.union(y_ * self.size + x_, y * self.size + x)
             return self.top_bottom.connected(self.size * self.size, self.size * self.size + 1)
         return False
+
+    def clone_board(self):
+        return copy.deepcopy(self)
 
     def print_board(self):
         rows = self.size

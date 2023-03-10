@@ -124,13 +124,33 @@ class MCTSAgent(PlayerInterface):
 
     def roll_out(self, state: HexGameState):
         moves = state.empty_spaces
-
+        # split_moves should probably be used in nn / tournament
+        # split_moves = np.concatenate(([state.current_player], [int(i) for i in moves.split()]))
         while state.winner == 0:
             y, x = random.choice(tuple(moves))
             state.place_piece(y, x)
             moves.remove((y, x))
 
         return state.winner
+
+
+    def roll_out_game(self, board_copy:HexGameState=None, epsilon=1, sigma=1):
+        """
+        TODO rollout game with rewards for reinforcement learning
+        :param epsilon:
+        :param sigma:
+        :param board_copy:
+        :return:
+        """
+        if random.uniform(0, 1) > sigma:
+            # evaluate?
+            pass
+        while board_copy.winner == 0:
+            self.roll_out(board_copy)
+        if board_copy.winner == 1:
+            return 1
+        else:
+            return -10
 
     def backup(self, node, turn, outcome):
         """
@@ -141,15 +161,14 @@ class MCTSAgent(PlayerInterface):
         # at the node and not the next player to play
         if outcome == -1:
             reward = 0
-        else:   
+        else:
             reward = -1 if outcome == turn else 1
-        
+
         while node is not None:
             node.N += 1
             node.Q += reward
             reward = -reward
             node = node.parent
-
 
     def tree_size(self):
         """

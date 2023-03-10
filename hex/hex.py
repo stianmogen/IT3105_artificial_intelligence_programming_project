@@ -30,5 +30,22 @@ class HexGame:
         print(f'Player {self.board.winner} wins!')
 
 
+    def run(self, epsilon=1, sigma=1):
+        """
+        TODO Method for running simulations and training
+        :param epsilon:
+        :param sigma:
+        :return:
+        """
+        while not self.board.winner:
+            board_copy = self.board.clone_board()
+            reward = self.player1.roll_out_game(board_copy)
+            if reward == 1:
+                print(reward)
+        print("finished")
+
+
+
+
 if __name__ == "__main__":
-    HexGame(7).play()
+    HexGame(3).run()
