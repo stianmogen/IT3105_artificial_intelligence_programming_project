@@ -126,11 +126,9 @@ class MCTSAgent(PlayerInterface):
         moves = state.empty_spaces
         # split_moves should probably be used in nn / tournament
         # split_moves = np.concatenate(([state.current_player], [int(i) for i in moves.split()]))
-        while state.winner == 0:
+        while state.winner == None:
             y, x = random.choice(tuple(moves))
             state.place_piece(y, x)
-            moves.remove((y, x))
-
         return state.winner
 
 
@@ -145,7 +143,7 @@ class MCTSAgent(PlayerInterface):
         if random.uniform(0, 1) > sigma:
             # evaluate?
             pass
-        while board_copy.winner == 0:
+        while board_copy.winner == None:
             self.roll_out(board_copy)
         if board_copy.winner == 1:
             return 1

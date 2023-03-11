@@ -39,13 +39,14 @@ class HexGame:
         """
         while not self.board.winner:
             board_copy = self.board.clone_board()
-            reward = self.player1.roll_out_game(board_copy)
-            if reward == 1:
-                print(reward)
+            for i in range(10):
+                reward = self.player1.roll_out_game(board_copy)
+                if reward == 1:
+                    print(reward)
         print("finished")
 
 
 
 
 if __name__ == "__main__":
-    HexGame(3).run()
+    HexGame(4).play()
