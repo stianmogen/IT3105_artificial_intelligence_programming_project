@@ -41,7 +41,7 @@ class HexGame:
             board_copy = self.board.clone_board()
             for i in range(10):
                 reward = self.player1.roll_out_game(board_copy)
-                if reward == 1:
+                if reward == -10:
                     print(reward)
         print("finished")
 
@@ -49,4 +49,4 @@ class HexGame:
 
 
 if __name__ == "__main__":
-    HexGame(4).play()
+    HexGame(4).run()

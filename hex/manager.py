@@ -57,6 +57,13 @@ class MCTSAgent(PlayerInterface):
         y, x = bestchild.move
         return y, x
 
+    def update(self, reward):
+        self.root.N += 1
+        self.root.Q += (reward - self.root.Q) / (1 + self.root.Q)
+        for child in self.root.children:
+            child.N += 1
+            child.Q += (reward - child.Q) / (1 + child.N)
+
     def search(self, time_budget):
 
         self.root = Node()
