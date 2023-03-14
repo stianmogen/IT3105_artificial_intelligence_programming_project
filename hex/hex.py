@@ -6,8 +6,8 @@ from player import Player
 class HexGame:
     def __init__(self, size):
         self.board = HexGameState(size)
-        self.player1 = MCTSAgent(self.board, time_budget=5)
-        self.player2 = MCTSAgent(self.board, time_budget=5)
+        self.player1 = MCTSAgent(self.board, time_budget=1)
+        self.player2 = MCTSAgent(self.board, time_budget=2)
         #self.player2 = Player(name="2", board_size=size)
 
     def play(self):

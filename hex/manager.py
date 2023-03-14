@@ -117,7 +117,7 @@ class MCTSAgent(PlayerInterface):
         moves in the passed HexGameState and add them to the tree.
         """
         children = []
-        if state.winner != None:
+        if state.winner is not None:
             # game is over at this node so nothing to expand
             return False
 
