@@ -7,8 +7,8 @@ class HexGame:
     def __init__(self, size):
         self.board = HexGameState(size)
         self.player1 = MCTSAgent(self.board, time_budget=5)
-        #self.player2 = MCTSAgent(self.board, time_budget=5)
-        self.player2 = Player(name="2", board_size=size)
+        self.player2 = MCTSAgent(self.board, time_budget=5)
+        #self.player2 = Player(name="2", board_size=size)
 
     def play(self):
         self.board.print_board()
@@ -49,4 +49,4 @@ class HexGame:
 
 
 if __name__ == "__main__":
-    HexGame(4).run()
+    HexGame(7).play()

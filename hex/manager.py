@@ -57,6 +57,7 @@ class MCTSAgent(PlayerInterface):
         y, x = bestchild.move
         return y, x
 
+    # Update Q and N when exploring
     def update(self, reward):
         self.root.N += 1
         self.root.Q += (reward - self.root.Q) / (1 + self.root.Q)
@@ -72,14 +73,10 @@ class MCTSAgent(PlayerInterface):
         num_rollouts = 0
 
         while time.perf_counter() - startTime < time_budget:
-
             node, state = self.select_node()
-
+            player = self.rootstate.current_player
             outcome = self.roll_out(state)
-
-            turn = state.current_player
-            self.backup(node, turn, outcome)
-
+            self.backup(node, player, outcome)
             num_rollouts += 1
 
         stderr.write("Ran " + str(num_rollouts) + " rollouts in " + \
@@ -167,7 +164,7 @@ class MCTSAgent(PlayerInterface):
         if outcome == -1:
             reward = 0
         else:
-            reward = -1 if outcome == turn else 1
+            reward = 1 if outcome == turn else -1
 
         while node is not None:
             node.N += 1
