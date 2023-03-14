@@ -37,6 +37,13 @@ class NeuralNet:
     def best_action(self, state):
         return 0
 
+    def optimize_model(self):
+        if self.memory.__len__() < self.batch_size:
+            return
+        transitions = self.memory.sample(self.batch_size)
+        non_final_mask = torch.tensor(tuple(map()))
+
+
 if __name__ == '__main__':
     net = NeuralNet(HexGameState(3))
     print(net)

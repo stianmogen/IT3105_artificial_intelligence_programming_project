@@ -3,6 +3,10 @@ import random
 import time
 from queue import Queue
 from sys import stderr
+
+import torch
+
+from nn.qNetwork import DQN
 from player import PlayerInterface
 import matplotlib.pyplot as plt
 
@@ -45,37 +49,63 @@ class MCTSAgent(PlayerInterface):
         self.root = Node()
         self.exploration = exploration
         self.time_budget = time_budget
+        self.board_size = state.size
+        self.actor = DQN(self.board_size**2)
+
 
     def get_move(self):
         self.search(self.time_budget)
-        y, x = self.best_move()
+        y, x, visit_distribution = self.best_move()
         for child in self.root.children:
             if child.move == (y, x):
                 self.root = child
                 self.root.parent = None
                 break
-        return y, x
+        return y, x, visit_distribution
 
     def best_move(self):
         if self.rootstate.winner is not None:
             return None
 
         size = self.rootstate.size
-        visits = np.zeros(49)
+        visits = np.zeros(size*size)
+
         for child in self.root.children:
             y, x = child.move
             visits[y * size + x] = child.N
-        tiles = range(49)
-        values = normalize(visits)
-        plt.bar(tiles, values)
+
+        visit_distribution = normalize(visits)
+        self.plot_dist(range(size*size), visit_distribution)
+        '''
+        plt.bar(range(size*size), visit_distribution)
         plt.show()
+        '''
 
         # choose the move of the most simulated node breaking ties randomly
-        max_value = max(self.root.children, key=lambda n: n.N).N
+        max_value = max(visits)
         max_nodes = [n for n in self.root.children if n.N == max_value]
-        bestchild = random.choice(max_nodes)
-        y, x = bestchild.move
-        return y, x
+        best_child = random.choice(max_nodes)
+        y, x = best_child.move
+        return y, x, visit_distribution
+
+    def plot_dist(self, size, dist):
+        plt.bar(size, dist)
+        plt.show()
+
+    def distribution(self):
+        if self.rootstate.winner is not None:
+            return None
+        size = self.rootstate.size
+        #output = np.zeros([2, size*size], dtype=object)
+        visits = np.zeroes(size*size)
+        for child in self.root.children:
+            x, y = child.move
+            #output[0][y * size + x] = child.move
+            visits[y * size + x] = child.N
+        #output[1:2, :] = normalize(output[1:2, :])
+        D = normalize(visits)
+        print(self.rootstate.board, D)
+        return self.rootstate.board, D
 
     def search(self, time_budget):
         last_move = self.rootstate.last_move
@@ -141,31 +171,23 @@ class MCTSAgent(PlayerInterface):
         parent.add_children(children)
         return True
 
-    def roll_out(self, state: HexGameState):
+    def roll_out(self, state: HexGameState, epsilon=0.9):
         moves = state.empty_spaces
-
         while state.winner is None:
-            y, x = random.choice(tuple(moves))
+            # TODO: Actor selects move based on probability distribution
+            if random.random() < epsilon:
+                y, x = random.choice(tuple(moves))
+            else:
+                print(state.board.flatten())
+                dist = self.actor(torch.tensor(state.board.flatten()))
+                move = torch.argmax(dist)
+
+                y = move // self.board_size
+                x = move % self.board_size
+
             state.place_piece(y, x)
         return state.winner
 
-    def roll_out_game(self, board_copy: HexGameState = None, epsilon=1, sigma=1):
-        """
-        TODO rollout game with rewards for reinforcement learning
-        :param epsilon:
-        :param sigma:
-        :param board_copy:
-        :return:
-        """
-        if random.uniform(0, 1) > sigma:
-            # evaluate?
-            pass
-        while board_copy.winner == None:
-            self.roll_out(board_copy)
-        if board_copy.winner == 1:
-            return 1
-        else:
-            return -10
 
     def backup(self, node, turn, outcome):
         """

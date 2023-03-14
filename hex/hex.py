@@ -1,32 +1,45 @@
 from game_state import HexGameState
 from manager import MCTSAgent
 from player import Player
+from nn.replayBuffer import ReplayBuffer
 
 
 class HexGame:
     def __init__(self, size):
         self.board = HexGameState(size)
-        self.player1 = MCTSAgent(self.board, time_budget=5, exploration=1)
-        self.player2 = MCTSAgent(self.board, time_budget=5, exploration=1)
+        self.player1 = MCTSAgent(self.board, time_budget=1, exploration=1)
+        self.player2 = MCTSAgent(self.board, time_budget=1, exploration=1)
+        self.replayBuffer = ReplayBuffer()
         #self.player2 = Player(name="2", board_size=size)
 
     def play(self):
         self.board.print_board()
         while not self.board.winner:
 
-            y, x = self.player1.get_move()
+            y, x, visit_dist = self.player1.get_move()
+            print(visit_dist)
+            state = self.board.clone_board()
             while not self.board.place_piece(y, x):
                 print('Place already filled, try again.')
-                y, x = self.player1.get_move()
+                y, x, visit_dist = self.player1.get_move()
+                print(visit_dist)
+
+            self.replayBuffer.push([state, visit_dist])
             self.board.print_board()
 
             if not self.board.winner:
-                y, x = self.player2.get_move()
+                y, x, visit_dist = self.player2.get_move()
+                print(visit_dist)
+                state = self.board.clone_board()
                 while not self.board.place_piece(y, x):
                     print('Place already filled, try again.')
-                    y, x = self.player2.get_move()
-                self.board.print_board()
+                    y, x, visit_dist = self.player2.get_move()
+                    print(visit_dist)
 
+                self.board.print_board()
+                self.replayBuffer.push([state, visit_dist])
+            print(self.replayBuffer.__len__())
+            print(self.replayBuffer.memory)
         print(f'Player {self.board.winner} wins!')
 
 
@@ -49,4 +62,4 @@ class HexGame:
 
 
 if __name__ == "__main__":
-    HexGame(7).play()
+    HexGame(5).play()

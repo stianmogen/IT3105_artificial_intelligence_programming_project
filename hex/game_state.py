@@ -57,7 +57,7 @@ class HexGameState:
         return False
 
     def clone_board(self):
-        return copy.deepcopy(self)
+        return copy.deepcopy(self.board)
 
     def print_board(self):
         rows = self.size

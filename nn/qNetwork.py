@@ -1,19 +1,31 @@
 import torch.nn as nn
 import torch.nn.functional as F
+import torch
 
 
 # https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
 class DQN(nn.Module):
-
-    def __init__(self, n_observations, n_actions):
+    def __init__(self, size):
         super(DQN, self).__init__()
-        self.layer1 = nn.Linear(n_observations, 128)
-        self.layer2 = nn.Linear(128, 128)
-        self.layer3 = nn.Linear(128, n_actions)
+        self.nn = nn.Sequential(
+            nn.Linear(size, 128),
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, size)
+        )
+        self.init_weights()
 
-    # Called with either one element to determine next action, or a batch
-    # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def forward(self, x):
-        x = F.relu(self.layer1(x))
-        x = F.relu(self.layer2(x))
-        return self.layer3(x)
+        mask = torch.where(x == 0, 1, 0)
+        output = self.nn(x)
+        masked = torch.mul(output, mask)
+        normalized = torch.div(masked, torch.sum(masked))
+        return normalized
+
+    def init_weights(self):
+        init_range = 0.2
+        for layer in self.nn:
+            if type(layer) == nn.Linear:
+                layer.bias.data.zero_()
+                layer.weight.data.uniform_(-init_range, init_range)
