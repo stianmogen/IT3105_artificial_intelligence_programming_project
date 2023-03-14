@@ -12,9 +12,8 @@ from game_state import HexGameState
 import copy
 
 
-def softmax(x):
-    e_x = np.exp(x - np.max(x))
-    return e_x / e_x.sum()
+def normalize(x):
+    return x / x.sum()
 
 
 class Node:
@@ -65,12 +64,10 @@ class MCTSAgent(PlayerInterface):
         visits = np.zeros(49)
         for child in self.root.children:
             y, x = child.move
-            visits[y*size+x] = child.N
+            visits[y * size + x] = child.N
         tiles = range(49)
-        values = softmax(visits)
-
+        values = normalize(visits)
         plt.bar(tiles, values)
-        plt.legend()
         plt.show()
 
         # choose the move of the most simulated node breaking ties randomly
@@ -79,7 +76,6 @@ class MCTSAgent(PlayerInterface):
         bestchild = random.choice(max_nodes)
         y, x = bestchild.move
         return y, x
-
 
     def search(self, time_budget):
         last_move = self.rootstate.last_move
@@ -153,8 +149,7 @@ class MCTSAgent(PlayerInterface):
             state.place_piece(y, x)
         return state.winner
 
-
-    def roll_out_game(self, board_copy:HexGameState=None, epsilon=1, sigma=1):
+    def roll_out_game(self, board_copy: HexGameState = None, epsilon=1, sigma=1):
         """
         TODO rollout game with rewards for reinforcement learning
         :param epsilon:
