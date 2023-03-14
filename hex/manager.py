@@ -44,6 +44,11 @@ class MCTSAgent(PlayerInterface):
     def get_move(self):
         self.search(self.time_budget)
         y, x = self.best_move()
+        for child in self.root.children:
+            if child.move == (y, x):
+                self.root = child
+                self.root.parent = None
+                break
         return y, x
 
     def best_move(self):
@@ -57,24 +62,20 @@ class MCTSAgent(PlayerInterface):
         y, x = bestchild.move
         return y, x
 
-    # Update Q and N when exploring
-    def update(self, reward):
-        self.root.N += 1
-        self.root.Q += (reward - self.root.Q) / (1 + self.root.Q)
-        for child in self.root.children:
-            child.N += 1
-            child.Q += (reward - child.Q) / (1 + child.N)
 
     def search(self, time_budget):
-
-        self.root = Node()
+        last_move = self.rootstate.last_move
+        if self.root.move and last_move != self.root.move:
+            for child in self.root.children:
+                if child.move == last_move:
+                    self.root = child
+                    self.root.parent = None
 
         startTime = time.perf_counter()
         num_rollouts = 0
-
         while time.perf_counter() - startTime < time_budget:
             node, state = self.select_node()
-            player = self.rootstate.current_player
+            player = state.current_player
             outcome = self.roll_out(state)
             self.backup(node, player, outcome)
             num_rollouts += 1
@@ -128,9 +129,8 @@ class MCTSAgent(PlayerInterface):
 
     def roll_out(self, state: HexGameState):
         moves = state.empty_spaces
-        # split_moves should probably be used in nn / tournament
-        # split_moves = np.concatenate(([state.current_player], [int(i) for i in moves.split()]))
-        while state.winner == None:
+
+        while state.winner is None:
             y, x = random.choice(tuple(moves))
             state.place_piece(y, x)
         return state.winner
@@ -164,7 +164,7 @@ class MCTSAgent(PlayerInterface):
         if outcome == -1:
             reward = 0
         else:
-            reward = 1 if outcome == turn else -1
+            reward = -1 if outcome == turn else 1
 
         while node is not None:
             node.N += 1
