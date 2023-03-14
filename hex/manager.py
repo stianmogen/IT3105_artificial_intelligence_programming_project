@@ -4,11 +4,17 @@ import time
 from queue import Queue
 from sys import stderr
 from player import PlayerInterface
+import matplotlib.pyplot as plt
 
 import numpy as np
 
 from game_state import HexGameState
 import copy
+
+
+def softmax(x):
+    e_x = np.exp(x - np.max(x))
+    return e_x / e_x.sum()
 
 
 class Node:
@@ -54,6 +60,18 @@ class MCTSAgent(PlayerInterface):
     def best_move(self):
         if self.rootstate.winner is not None:
             return None
+
+        size = self.rootstate.size
+        visits = np.zeros(49)
+        for child in self.root.children:
+            y, x = child.move
+            visits[y*size+x] = child.N
+        tiles = range(49)
+        values = softmax(visits)
+
+        plt.bar(tiles, values)
+        plt.legend()
+        plt.show()
 
         # choose the move of the most simulated node breaking ties randomly
         max_value = max(self.root.children, key=lambda n: n.N).N
