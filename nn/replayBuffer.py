@@ -16,7 +16,7 @@ class ReplayBuffer:
     def push(self, case):
         # we push a new case to memory, if max size is reached we pop left
         if len(self.memory) >= self.capacity:
-            self.memory = self.memory[1:]
+            self.memory.popleft()
         self.memory.append(case)
 
     def sample(self, batch_size):

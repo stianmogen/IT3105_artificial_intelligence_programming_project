@@ -44,13 +44,14 @@ class Node:
 
 class MCTSAgent(PlayerInterface):
 
-    def __init__(self, state: HexGameState, actor, exploration=1, time_budget=5):
+    def __init__(self, state: HexGameState, actor, epsilon=1, exploration=1, time_budget=5):
         self.rootstate = state
         self.root = Node()
         self.exploration = exploration
         self.time_budget = time_budget
         self.board_size = state.size
         self.actor = actor
+        self.epsilon = epsilon
 
 
     def get_move(self):
@@ -75,11 +76,7 @@ class MCTSAgent(PlayerInterface):
             visits[y * size + x] = child.N
 
         visit_distribution = normalize(visits)
-        self.plot_dist(range(size*size), visit_distribution)
-        '''
-        plt.bar(range(size*size), visit_distribution)
-        plt.show()
-        '''
+        #self.plot_dist(range(size*size), visit_distribution)
 
         # choose the move of the most simulated node breaking ties randomly
         max_value = max(visits)
@@ -170,18 +167,17 @@ class MCTSAgent(PlayerInterface):
         parent.add_children(children)
         return True
 
-    def roll_out(self, state: HexGameState, epsilon=0.9):
+    def roll_out(self, state: HexGameState):
         moves = state.empty_spaces
         while state.winner is None:
-            # TODO: Actor selects move based on probability distribution
-            if random.random() < epsilon:
+            if random.random() < self.epsilon:
                 y, x = random.choice(tuple(moves))
             else:
                 dist = self.actor(torch.tensor(state.board.flatten(), dtype=torch.float32))
                 move = torch.argmax(dist)
                 y = (move // self.board_size).item()
                 x = (move % self.board_size).item()
-                # print(y, x)
+
             state.place_piece(y, x)
         return state.winner
 

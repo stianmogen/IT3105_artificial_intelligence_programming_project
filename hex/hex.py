@@ -9,79 +9,61 @@ from nn.replayBuffer import ReplayBuffer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-class HexGame:
-    def __init__(self, size):
-        self.board = HexGameState(size)
-        self.actor = DQN(size**2)
-        self.player1 = MCTSAgent(self.board, actor=self.actor, time_budget=1, exploration=1)
-        self.player2 = MCTSAgent(self.board, actor=self.actor, time_budget=1, exploration=1)
-        self.replayBuffer = ReplayBuffer()
 
-        #self.player2 = Player(name="2", board_size=size)
+def play(size=7, num_games=20, batch_size=28, epochs=10):
+    actor = DQN(size ** 2)
+    replayBuffer = ReplayBuffer()
 
-    def play(self, num_games=20, batch_size=28, epochs=10):
-        for i in range(num_games):
+    epsilon = 1
+    epsilon_decay = 0.98
+    for i in range(num_games):
+        board = HexGameState(size)
+        player1 = MCTSAgent(board, actor=actor, epsilon=epsilon, time_budget=2, exploration=1)
+        player2 = MCTSAgent(board, actor=actor, epsilon=epsilon, time_budget=2, exploration=1)
+        # self.player2 = Player(name="2", board_size=size)
+        print(f"GAME {i}, epsilon = {epsilon}")
+        board.print_board()
+        while not board.winner:
+            y, x, visit_dist = player1.get_move()
+            state = board.clone_board()
+            while not board.place_piece(y, x):
+                print('Place already filled, try again.')
+                y, x, visit_dist = player1.get_move()
 
-            print(f"GAME {i}")
-            self.board.print_board()
-            while not self.board.winner:
-                y, x, visit_dist = self.player1.get_move()
-                state = self.board.clone_board()
-                while not self.board.place_piece(y, x):
+            replayBuffer.push([state.flatten(), visit_dist])
+            board.print_board()
+
+            if not board.winner:
+                y, x, visit_dist = player2.get_move()
+                state = board.clone_board()
+                while not board.place_piece(y, x):
                     print('Place already filled, try again.')
-                    y, x, visit_dist = self.player1.get_move()
+                    y, x, visit_dist = player2.get_move()
 
-                self.replayBuffer.push([state.flatten(), visit_dist])
-                self.board.print_board()
+                board.print_board()
+                replayBuffer.push([state.flatten(), visit_dist])
+        print(f'Player {board.winner} wins!')
 
-                if not self.board.winner:
-                    y, x, visit_dist = self.player2.get_move()
-                    state = self.board.clone_board()
-                    while not self.board.place_piece(y, x):
-                        print('Place already filled, try again.')
-                        y, x, visit_dist = self.player2.get_move()
+        sample = replayBuffer.sample(batch_size)
+        x_train = torch.tensor(sample[:][0], dtype=torch.float32)
+        y_train = torch.tensor(sample[:][1], dtype=torch.float32)
 
-                    self.board.print_board()
-                    self.replayBuffer.push([state.flatten(), visit_dist])
-            print(f'Player {self.board.winner} wins!')
+        criterion = nn.SmoothL1Loss()
+        optimizer = optim.Adam(actor.parameters(), lr=0.0001, betas=(0.5, 0.999))
+        actor.train()
 
-            sample = self.replayBuffer.sample(batch_size)
-            x_train = torch.tensor(sample[:][0], dtype=torch.float32)
-            y_train = torch.tensor(sample[:][1], dtype=torch.float32)
+        for i in range(epochs):
+            optimizer.zero_grad()
+            y_pred = actor(x_train)
 
-            criterion = nn.SmoothL1Loss()
-            optimizer = optim.Adam(self.actor.parameters(), lr=0.01, betas=(0.5, 0.999))
-            self.actor.train()
-
-            for i in range(epochs):
-                optimizer.zero_grad()
-                y_pred = self.actor(x_train)
-
-                loss = criterion(y_pred, y_train)
+            loss = criterion(y_pred, y_train)
+            if i == 0 or i == epochs-1:
                 print(f"Epoch {i} loss: {loss}")
-                loss.backward()
-                optimizer.step()
-            self.actor.eval()
-            self.board.reset()
-
-
-    def run(self, epsilon=1, sigma=1):
-        """
-        TODO Method for running simulations and training
-        :param epsilon:
-        :param sigma:
-        :return:
-        """
-        while not self.board.winner:
-            board_copy = self.board.clone_board()
-            for i in range(10):
-                reward = self.player1.roll_out_game(board_copy)
-                if reward == -10:
-                    print(reward)
-        print("finished")
-
-
+            loss.backward()
+            optimizer.step()
+        actor.eval()
+        epsilon *= epsilon_decay
 
 
 if __name__ == "__main__":
-    HexGame(5).play(20, 128, 10)
+    play(size=5, num_games=50, batch_size=128, epochs=200)
