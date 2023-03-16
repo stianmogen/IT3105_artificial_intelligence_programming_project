@@ -56,13 +56,13 @@ class MCTSAgent(PlayerInterface):
 
     def get_move(self):
         self.search(self.time_budget)
-        y, x, visit_distribution = self.best_move()
+        move, visit_distribution = self.best_move()
         for child in self.root.children:
-            if child.move == (y, x):
+            if child.move == move:
                 self.root = child
                 self.root.parent = None
                 break
-        return y, x, visit_distribution
+        return move, visit_distribution
 
     def best_move(self):
         if self.rootstate.winner is not None:
@@ -72,8 +72,8 @@ class MCTSAgent(PlayerInterface):
         visits = np.zeros(size*size)
 
         for child in self.root.children:
-            y, x = child.move
-            visits[y * size + x] = child.N
+            move = child.move
+            visits[move] = child.N
 
         visit_distribution = normalize(visits)
         #self.plot_dist(range(size*size), visit_distribution)
@@ -82,8 +82,8 @@ class MCTSAgent(PlayerInterface):
         max_value = max(visits)
         max_nodes = [n for n in self.root.children if n.N == max_value]
         best_child = random.choice(max_nodes)
-        y, x = best_child.move
-        return y, x, visit_distribution
+        move = best_child.move
+        return move, visit_distribution
 
     def plot_dist(self, size, dist):
         plt.bar(size, dist)
@@ -96,9 +96,9 @@ class MCTSAgent(PlayerInterface):
         #output = np.zeros([2, size*size], dtype=object)
         visits = np.zeroes(size*size)
         for child in self.root.children:
-            x, y = child.move
+            move = child.move
             #output[0][y * size + x] = child.move
-            visits[y * size + x] = child.N
+            visits[move] = child.N
         #output[1:2, :] = normalize(output[1:2, :])
         D = normalize(visits)
         return self.rootstate.board, D
@@ -137,8 +137,8 @@ class MCTSAgent(PlayerInterface):
             max_value = max(node.children, key=lambda n: n.value(self.exploration)).value(self.exploration)
             max_nodes = [n for n in node.children if n.value(self.exploration) == max_value]
             node = random.choice(max_nodes)
-            y, x = node.move
-            state.place_piece(y, x)
+            move = node.move
+            state.place_piece(move)
 
             # if some child node has not been explored select it before expanding
             # other children
@@ -147,8 +147,8 @@ class MCTSAgent(PlayerInterface):
 
         if self.expand(node, state):
             node = random.choice(node.children)
-            y, x = node.move
-            state.place_piece(y, x)
+            move = node.move
+            state.place_piece(move)
         return node, state
 
     def expand(self, parent, state):
@@ -171,16 +171,12 @@ class MCTSAgent(PlayerInterface):
         moves = state.empty_spaces
         while state.winner is None:
             if random.random() < self.epsilon:
-                y, x = random.choice(tuple(moves))
+                move = random.choice(tuple(moves))
             else:
-                dist = self.actor(torch.tensor(state.board.flatten(), dtype=torch.float32))
-                move = torch.argmax(dist)
-                y = (move // self.board_size).item()
-                x = (move % self.board_size).item()
-
-            state.place_piece(y, x)
+                dist = self.actor(torch.tensor(state.board, dtype=torch.float32))
+                move = torch.argmax(dist).item()
+            state.place_piece(move)
         return state.winner
-
 
     def backup(self, node, turn, outcome):
         """

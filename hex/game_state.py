@@ -9,12 +9,12 @@ class HexGameState:
     def __init__(self, size):
         self.size = size
         self.current_player = 1
-        self.board = np.zeros((size*size), dtype=int)
+        self.board = np.zeros(size * size, dtype=int)
+        self.empty_spaces = set(range(size * size))
         self.column_names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         self.last_move = None
         self.winner = None
-        self.neighbor_patterns = [(1, 0), (0, 1), (-1, 0), (0, -1), (1, -1), (-1, 1)]
-        self.empty_spaces = set((y, x) for x in range(size) for y in range(size))
+        self.neighbor_pattern = self.generate_neighbour_pattern()
         self.left_right = DisjointSet(size * size + 2)
         self.top_bottom = DisjointSet(size * size + 2)
 
@@ -24,22 +24,21 @@ class HexGameState:
             self.left_right.union(size * size, i * size)
             self.left_right.union(size * size + 1, i * size + size - 1)
 
-    def generate_pattern(self):
-        size = self.size
-        l = []
-        for i in range(size):
-            for j in range(size):
-                neighbours = self.neighbours(i, j)
-                l.append([y*size+x for y, x in neighbours])
-        print(l[0])
+    def generate_neighbour_pattern(self):
+        hex_pattern = [(1, 0), (0, 1), (-1, 0), (0, -1), (1, -1), (-1, 1)]
+        neighbour_patters = []
+        for y in range(self.size):
+            for x in range(self.size):
+                neighbours = self.neighbours(y, x, hex_pattern)
+                neighbour_patters.append([y_ * self.size + x_ for y_, x_ in neighbours])
+        return neighbour_patters
 
-
-    def place_piece(self, y, x):
-        if not self.board[y][x]:
-            self.board[y][x] = self.current_player
-            self.last_move = (y, x)
-            self.empty_spaces.remove((y, x))
-            if self.check_win(y, x):
+    def place_piece(self, move):
+        if not self.board[move]:
+            self.board[move] = self.current_player
+            self.last_move = move
+            self.empty_spaces.remove(move)
+            if self.check_win(move):
                 self.winner = self.current_player
             elif len(self.empty_spaces) == 0:
                 self.winner = -1
@@ -47,59 +46,28 @@ class HexGameState:
             return True
         return False
 
-    def convert_to_1d(self, x, y):
-        return x + y * self.size
-
-    def place_piece_1d(self, i):
-        if not self.board[i]:
-            self.board[i] = self.current_player
-            self.last_move = i
-            self.empty_spaces.remove(i)
-            if self.check_win(i):
-                self.winner = self.current_player
-                return
-            elif len(self.empty_spaces) == 0:
-                self.winner = -1
-                return
-            self.current_player = 1 if self.current_player == 2 else 2
-
-    def neighbours(self, y, x):
-        return [(y + y_, x + x_) for y_, x_ in self.neighbor_patterns if
+    def neighbours(self, y, x, hex_pattern):
+        return [(y + y_, x + x_) for y_, x_ in hex_pattern if
                 (0 <= (y + y_) < self.size) and (0 <= (x + x_) < self.size)]
 
-    def check_win(self, y, x):
-        player = self.board[y][x]
+    def check_win(self, move):
+        player = self.board[move]
 
         if player == 1:
-            for y_, x_ in self.neighbours(y, x):
-                if self.board[y_][x_] == player:
-                    self.left_right.union(y_ * self.size + x_, y * self.size + x)
+            for move_ in self.neighbor_pattern[move]:
+                if self.board[move_] == player:
+                    self.left_right.union(move_, move)
             return self.left_right.connected(self.size * self.size, self.size * self.size + 1)
         elif player == 2:
-            for y_, x_ in self.neighbours(y, x):
-                if self.board[y_][x_] == player:
-                    self.top_bottom.union(y_ * self.size + x_, y * self.size + x)
+            for move_ in self.neighbor_pattern[move]:
+                if self.board[move_] == player:
+                    self.top_bottom.union(move_, move)
             return self.top_bottom.connected(self.size * self.size, self.size * self.size + 1)
         return False
 
     def clone_board(self):
         return copy.deepcopy(self.board)
 
-    def board_as_2d(self):
-        board_2d = []
-        for i in range(self.size):
-            row = self.board[i * self.size: (i + 1) * self.size]
-            board_2d.append(row)
-        return board_2d
-
-    def reset(self):
-        self.current_player = 1
-        self.board = np.zeros((self.size, self.size), dtype=int)
-        self.last_move = None
-        self.winner = None
-        self.empty_spaces = set((y, x) for x in range(self.size) for y in range(self.size))
-        self.left_right = DisjointSet(self.size * self.size + 2)
-        self.top_bottom = DisjointSet(self.size * self.size + 2)
 
     def print_board(self):
         rows = self.size
@@ -116,7 +84,7 @@ class HexGameState:
         for r in range(rows):
             row_mid = " " * indent
             row_mid += " {} | ".format(r + 1)
-            row_mid += " | ".join(map(color_mapping, self.board[r]))
+            row_mid += " | ".join(map(color_mapping, self.board[r*self.size:(r+1)*self.size]))
             row_mid += " | {} ".format(r + 1)
             print(row_mid)
             row_bottom = " " * indent

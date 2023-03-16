@@ -30,24 +30,24 @@ def play(size, num_games, batch_size, epochs, epsilon, epsilon_decay, save_inter
         board.print_board()
         # 4 d while ba (board.winner) not in final state
         while not board.winner:
-            y, x, visit_dist = player1.get_move()
+            move, visit_dist = player1.get_move()
             state = board.clone_board()
-            while not board.place_piece(y, x):
+            while not board.place_piece(move):
                 print('Place already filled, try again.')
-                y, x, visit_dist = player1.get_move()
+                move, visit_dist = player1.get_move()
 
-            replayBuffer.push([state.flatten(), visit_dist])
+            replayBuffer.push([state, visit_dist])
             board.print_board()
 
             if not board.winner:
-                y, x, visit_dist = player2.get_move()
+                move, visit_dist = player2.get_move()
                 state = board.clone_board()
-                while not board.place_piece(y, x):
+                while not board.place_piece(move):
                     print('Place already filled, try again.')
-                    y, x, visit_dist = player2.get_move()
+                    move, visit_dist = player2.get_move()
 
                 board.print_board()
-                replayBuffer.push([state.flatten(), visit_dist])
+                replayBuffer.push([state, visit_dist])
         print(f'Player {board.winner} wins!')
 
         sample = replayBuffer.sample(batch_size)
