@@ -3,6 +3,9 @@ import random
 
 
 # https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
+import torch
+
+
 class ReplayBuffer:
 
     def __init__(self, capacity=256):
@@ -17,6 +20,9 @@ class ReplayBuffer:
         self.memory.append(case)
 
     def sample(self, batch_size):
+        if batch_size > self.__len__():
+            batch_size = self.__len__()
+
         # sample method might
         return random.sample(self.memory, batch_size)
 

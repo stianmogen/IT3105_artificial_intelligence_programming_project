@@ -44,13 +44,13 @@ class Node:
 
 class MCTSAgent(PlayerInterface):
 
-    def __init__(self, state: HexGameState, exploration=1, time_budget=5):
+    def __init__(self, state: HexGameState, actor, exploration=1, time_budget=5):
         self.rootstate = state
         self.root = Node()
         self.exploration = exploration
         self.time_budget = time_budget
         self.board_size = state.size
-        self.actor = DQN(self.board_size**2)
+        self.actor = actor
 
 
     def get_move(self):
@@ -104,7 +104,6 @@ class MCTSAgent(PlayerInterface):
             visits[y * size + x] = child.N
         #output[1:2, :] = normalize(output[1:2, :])
         D = normalize(visits)
-        print(self.rootstate.board, D)
         return self.rootstate.board, D
 
     def search(self, time_budget):
@@ -178,13 +177,11 @@ class MCTSAgent(PlayerInterface):
             if random.random() < epsilon:
                 y, x = random.choice(tuple(moves))
             else:
-                print(state.board.flatten())
-                dist = self.actor(torch.tensor(state.board.flatten()))
+                dist = self.actor(torch.tensor(state.board.flatten(), dtype=torch.float32))
                 move = torch.argmax(dist)
-
-                y = move // self.board_size
-                x = move % self.board_size
-
+                y = (move // self.board_size).item()
+                x = (move % self.board_size).item()
+                # print(y, x)
             state.place_piece(y, x)
         return state.winner
 

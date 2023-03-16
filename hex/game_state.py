@@ -59,6 +59,15 @@ class HexGameState:
     def clone_board(self):
         return copy.deepcopy(self.board)
 
+    def reset(self):
+        self.current_player = 1
+        self.board = np.zeros((self.size, self.size), dtype=int)
+        self.last_move = None
+        self.winner = None
+        self.empty_spaces = set((y, x) for x in range(self.size) for y in range(self.size))
+        self.left_right = DisjointSet(self.size * self.size + 2)
+        self.top_bottom = DisjointSet(self.size * self.size + 2)
+
     def print_board(self):
         rows = self.size
         cols = self.size
