@@ -9,7 +9,7 @@ class HexGameState:
     def __init__(self, size):
         self.size = size
         self.current_player = 1
-        self.board = np.zeros((size, size), dtype=int)
+        self.board = np.zeros((size*size), dtype=int)
         self.column_names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         self.last_move = None
         self.winner = None
@@ -24,6 +24,16 @@ class HexGameState:
             self.left_right.union(size * size, i * size)
             self.left_right.union(size * size + 1, i * size + size - 1)
 
+    def generate_pattern(self):
+        size = self.size
+        l = []
+        for i in range(size):
+            for j in range(size):
+                neighbours = self.neighbours(i, j)
+                l.append([y*size+x for y, x in neighbours])
+        print(l[0])
+
+
     def place_piece(self, y, x):
         if not self.board[y][x]:
             self.board[y][x] = self.current_player
@@ -36,6 +46,22 @@ class HexGameState:
             self.current_player = 1 if self.current_player == 2 else 2
             return True
         return False
+
+    def convert_to_1d(self, x, y):
+        return x + y * self.size
+
+    def place_piece_1d(self, i):
+        if not self.board[i]:
+            self.board[i] = self.current_player
+            self.last_move = i
+            self.empty_spaces.remove(i)
+            if self.check_win(i):
+                self.winner = self.current_player
+                return
+            elif len(self.empty_spaces) == 0:
+                self.winner = -1
+                return
+            self.current_player = 1 if self.current_player == 2 else 2
 
     def neighbours(self, y, x):
         return [(y + y_, x + x_) for y_, x_ in self.neighbor_patterns if
@@ -59,6 +85,13 @@ class HexGameState:
     def clone_board(self):
         return copy.deepcopy(self.board)
 
+    def board_as_2d(self):
+        board_2d = []
+        for i in range(self.size):
+            row = self.board[i * self.size: (i + 1) * self.size]
+            board_2d.append(row)
+        return board_2d
+
     def reset(self):
         self.current_player = 1
         self.board = np.zeros((self.size, self.size), dtype=int)
@@ -72,6 +105,7 @@ class HexGameState:
         rows = self.size
         cols = self.size
         indent = 0
+
         headings = " " * 5 + (" " * 3).join(self.column_names[:cols])
         print(headings)
         tops = " " * 5 + (" " * 3).join("-" * cols)
