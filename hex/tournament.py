@@ -27,6 +27,7 @@ def run_series(actor1, actor2, board_size, num_games, epsilon, time_budget, expl
             if not board.winner:
                 move, _ = player2.get_move()
                 board.place_piece(move)
+                board.print_board()
         print("WINNER", board.winner)
         print("W=", w, "B=", b)
         board.print_board()
@@ -50,7 +51,7 @@ def run_tournament():
         f = os.path.join(actors_dir, filename)
         # checking if it is a file
         if os.path.isfile(f):
-            if filename == "game60" or filename == "game20":
+            if filename == "game40" or filename == "game40old":
                 print(filename)
                 actors_names.append(filename)
                 model = DQN(size * size)
@@ -61,7 +62,7 @@ def run_tournament():
     for i in range(len(actors)):
         for j in range(i+1, len(actors)):
             print(f"{actors_names[i]} vs {actors_names[j]}")
-            actor1_wins, actor2_wins = run_series(actors[i], actors[j], board_size=size, num_games=30, epsilon=0, time_budget=3,
+            actor1_wins, actor2_wins = run_series(actors[i], actors[j], board_size=size, num_games=20, epsilon=0, time_budget=1,
                                     exploration=1)
             print(f"{actors_names[i]} victories: {actor1_wins}")
             print(f"{actors_names[j]} victories: {actor2_wins}")

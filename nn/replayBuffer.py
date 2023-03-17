@@ -7,8 +7,7 @@ import torch
 
 
 class ReplayBuffer:
-
-    def __init__(self, capacity=256):
+    def __init__(self, capacity=2**9):
         # memory is a dq with capacity defined at instantiation else 256
         self.memory = deque([], maxlen=capacity)
         self.capacity = capacity

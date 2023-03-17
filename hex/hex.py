@@ -11,12 +11,12 @@ from nn.replayBuffer import ReplayBuffer
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def play(size, num_games, batch_size, epochs, epsilon, epsilon_decay, save_interval, time_budget, exploration):
+def play(size, num_games, batch_size, epochs, epsilon, epsilon_decay, save_interval, time_budget, exploration, embedding_size, buffer_size):
     if not os.path.exists(f"{size}X{size}"):
         os.makedirs(f"{size}X{size}")
 
-    actor = DQN(size ** 2)
-    replayBuffer = ReplayBuffer()
+    actor = DQN(size=(size ** 2), embedding_size=embedding_size)
+    replayBuffer = ReplayBuffer(capacity=buffer_size)
 
     # 4 for g in actual number of games
     for ga in range(1, num_games + 1):
@@ -57,8 +57,8 @@ def play(size, num_games, batch_size, epochs, epsilon, epsilon_decay, save_inter
         y_train = torch.tensor([sample[1] for sample in samples], dtype=torch.float32)
         print(y_train.type())
 
-        criterion = nn.SmoothL1Loss()
-        optimizer = optim.Adam(actor.parameters(), lr=0.01, betas=(0.5, 0.999))
+        criterion = nn.CrossEntropyLoss()
+        optimizer = optim.Adam(actor.parameters(), lr=0.0001, betas=(0.5, 0.999))
         scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
         actor.train()
 
@@ -81,11 +81,13 @@ def play(size, num_games, batch_size, epochs, epsilon, epsilon_decay, save_inter
 
 if __name__ == "__main__":
     play(size=7,
-         num_games=100,
-         batch_size=128,
-         epochs=50,
+         num_games=200,
+         batch_size=256,
+         epochs=100,
          epsilon=1,
-         epsilon_decay=0.98,
-         save_interval=20,
-         time_budget=3,
-         exploration=1)
+         epsilon_decay=0.99,
+         save_interval=40,
+         time_budget=1,
+         exploration=1,
+         embedding_size=3,
+         buffer_size=1024)

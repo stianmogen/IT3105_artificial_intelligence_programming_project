@@ -1,4 +1,3 @@
-import math
 import random
 import time
 from queue import Queue
@@ -6,13 +5,13 @@ from sys import stderr
 
 import torch
 
-from nn.qNetwork import DQN
 from player import PlayerInterface
 import matplotlib.pyplot as plt
 
 import numpy as np
 
 from game_state import HexGameState
+from nn.qNetwork import DQN
 import copy
 
 
@@ -43,7 +42,7 @@ class Node:
 
 class MCTSAgent(PlayerInterface):
 
-    def __init__(self, state: HexGameState, actor, epsilon=1, exploration=1, time_budget=5):
+    def __init__(self, state: HexGameState, actor: DQN, epsilon=1, exploration=1, time_budget=5):
         self.rootstate = state
         self.root = Node()
         self.exploration = exploration
@@ -75,7 +74,7 @@ class MCTSAgent(PlayerInterface):
 
         visit_distribution = normalize(visits)
 
-        #self.plot_dist(range(size*size), visit_distribution)
+        self.plot_dist(range(size*size), visit_distribution)
 
         # choose the move of the most simulated node breaking ties randomly
         max_value = max(visits)
@@ -175,9 +174,9 @@ class MCTSAgent(PlayerInterface):
             if random.random() < self.epsilon:
                 move = random.choice(tuple(moves))
             else:
-                #torch.tensor(current_state, dtype=torch.float32)
                 input = np.append(state.current_player, state.board)
                 dist = self.actor(torch.tensor([input]))
+
                 move = torch.argmax(dist).item()
             state.place_piece(move)
         return state.winner
