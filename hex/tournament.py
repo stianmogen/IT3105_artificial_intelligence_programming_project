@@ -52,28 +52,22 @@ def run_tournament():
         f = os.path.join(actors_dir, filename)
         # checking if it is a file
         if os.path.isfile(f):
-            print(filename)
-            actors_names.append(filename)
-            model = DQN(size * size)
-            model.load_state_dict(torch.load(f))
-            model.eval()
-            actors.append(model)
+            if filename == "game60" or filename == "game20":
+                print(filename)
+                actors_names.append(filename)
+                model = DQN(size * size)
+                model.load_state_dict(torch.load(f))
+                model.eval()
+                actors.append(model)
 
     for i in range(len(actors)):
-        for j in range(i, len(actors)):
+        for j in range(i+1, len(actors)):
             print(f"{actors_names[i]} vs {actors_names[j]}")
-            actor1_wins, actor2_wins, ties = run_series(actors[i], actors[j], board_size=size, num_games=20, epsilon=0, time_budget=3,
+            actor1_wins, actor2_wins, ties = run_series(actors[i], actors[j], board_size=size, num_games=30, epsilon=0, time_budget=3,
                                     exploration=1)
             print(f"{actors_names[i]} victories: {actor1_wins}")
             print(f"{actors_names[j]} victories: {actor2_wins}")
             print(f"Ties: {ties} ")
-    actor1 = actors[0]
-    actor2 = actors[1]
-    print(actors_names)
-    statistics = run_series(actor1, actor2, board_size=size, num_games=20, epsilon=0, time_budget=3, exploration=1)
-    print(f"Tie {statistics[2]} times")
-    print(f"Actor 1 won {statistics[1]} times")
-    print(f"Actor 2 won {statistics[2]} times")
 
 
 run_tournament()
