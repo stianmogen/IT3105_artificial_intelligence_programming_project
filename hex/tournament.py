@@ -14,8 +14,8 @@ def run_series(actor1, actor2, board_size, num_games, epsilon, time_budget, expl
     w = random.randint(0, 1)  # Starting actor index either 0 or 1
     b = 1 - w  # Second actor index is the one not starting
 
-    # Actor1 wins - actor2 wins - ties
-    statistics = [0, 0, 0]
+    # Actor1 wins - actor2 wins
+    statistics = [0, 0]
 
     for i in range(num_games):
         board = HexGameState(board_size)
@@ -30,11 +30,9 @@ def run_series(actor1, actor2, board_size, num_games, epsilon, time_budget, expl
         print("WINNER", board.winner)
         print("W=", w, "B=", b)
         board.print_board()
-        if board.winner == -1:
-            statistics[2] += 1
-        else:
-            winner = w if board.winner == 1 else b
-            statistics[winner] += 1
+
+        winner = w if board.winner == 1 else b
+        statistics[winner] += 1
 
         print(statistics)
         w = (w + 1) % 2  # Swapping actor starting
@@ -63,11 +61,10 @@ def run_tournament():
     for i in range(len(actors)):
         for j in range(i+1, len(actors)):
             print(f"{actors_names[i]} vs {actors_names[j]}")
-            actor1_wins, actor2_wins, ties = run_series(actors[i], actors[j], board_size=size, num_games=30, epsilon=0, time_budget=3,
+            actor1_wins, actor2_wins = run_series(actors[i], actors[j], board_size=size, num_games=30, epsilon=0, time_budget=3,
                                     exploration=1)
             print(f"{actors_names[i]} victories: {actor1_wins}")
             print(f"{actors_names[j]} victories: {actor2_wins}")
-            print(f"Ties: {ties} ")
 
 
 run_tournament()

@@ -40,8 +40,6 @@ class HexGameState:
             self.empty_spaces.remove(move)
             if self.check_win(move):
                 self.winner = self.current_player
-            elif len(self.empty_spaces) == 0:
-                self.winner = -1
             self.current_player = 1 if self.current_player == 2 else 2
             return True
         return False

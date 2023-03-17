@@ -27,7 +27,6 @@ class Node:
         self.children = []
         self.N = 0
         self.Q = 0
-        self.winner = 0
 
     def value(self, explore):
         if self.N == 0:
@@ -92,6 +91,7 @@ class MCTSAgent(PlayerInterface):
     def distribution(self):
         if self.rootstate.winner is not None:
             return None
+
         size = self.rootstate.size
         #output = np.zeros([2, size*size], dtype=object)
         visits = np.zeroes(size*size)
@@ -190,10 +190,8 @@ class MCTSAgent(PlayerInterface):
         # note that reward is calculated for player who just played
         # at the node and not the next player to play
 
-        if outcome == -1:
-            reward = 0
-        else:
-            reward = -1 if outcome == turn else 1
+
+        reward = -1 if outcome == turn else 1
 
         while node is not None:
             node.N += 1
