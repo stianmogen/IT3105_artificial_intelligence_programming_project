@@ -5,19 +5,21 @@ import torch
 
 # https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
 class DQN(nn.Module):
-    def __init__(self, size):
+    def __init__(self, size, embedding_size=64):
         super(DQN, self).__init__()
         self.nn = nn.Sequential(
-            nn.Linear(size, 128),
+            nn.Embedding(size + 1, embedding_size),
+            nn.Linear(embedding_size, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(128, size)
+            nn.Flatten(),
+            nn.Linear(128*(size+1), size)
         )
         self.init_weights()
 
     def forward(self, x):
-        mask = torch.where(x == 0, 1, 0)
+        mask = torch.where(x == 0, 1, 0)[:, 1:]
         output = self.nn(x)
         masked = torch.mul(output, mask)
         normalized = torch.div(masked, torch.sum(masked))

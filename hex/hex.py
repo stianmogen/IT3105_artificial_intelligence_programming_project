@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch import optim, nn
 import os
@@ -18,7 +19,7 @@ def play(size, num_games, batch_size, epochs, epsilon, epsilon_decay, save_inter
     replayBuffer = ReplayBuffer()
 
     # 4 for g in actual number of games
-    for ga in range(num_games):
+    for ga in range(1, num_games + 1):
         # 4 a initialize gameboard
         # 4 b starting board state are default value at initialization
         board = HexGameState(size)
@@ -31,17 +32,16 @@ def play(size, num_games, batch_size, epochs, epsilon, epsilon_decay, save_inter
         # 4 d while ba (board.winner) not in final state
         while not board.winner:
             move, visit_dist = player1.get_move()
-            state = board.clone_board()
+            state = np.append(board.current_player, board.clone_board())
             while not board.place_piece(move):
                 print('Place already filled, try again.')
                 move, visit_dist = player1.get_move()
-
             replayBuffer.push([state, visit_dist])
             board.print_board()
 
             if not board.winner:
                 move, visit_dist = player2.get_move()
-                state = board.clone_board()
+                state = np.append(board.current_player, board.clone_board())
                 while not board.place_piece(move):
                     print('Place already filled, try again.')
                     move, visit_dist = player2.get_move()
@@ -50,23 +50,27 @@ def play(size, num_games, batch_size, epochs, epsilon, epsilon_decay, save_inter
                 replayBuffer.push([state, visit_dist])
         print(f'Player {board.winner} wins!')
 
-        sample = replayBuffer.sample(batch_size)
-        x_train = torch.tensor(sample[:][0], dtype=torch.float32)
-        y_train = torch.tensor(sample[:][1], dtype=torch.float32)
+        samples = replayBuffer.sample(batch_size)
+
+        x_train = torch.tensor([sample[0] for sample in samples])
+        print(x_train)
+        y_train = torch.tensor([sample[1] for sample in samples], dtype=torch.float32)
+        print(y_train.type())
 
         criterion = nn.SmoothL1Loss()
-        optimizer = optim.Adam(actor.parameters(), lr=0.0001, betas=(0.5, 0.999))
+        optimizer = optim.Adam(actor.parameters(), lr=0.01, betas=(0.5, 0.999))
+        scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
         actor.train()
 
-        for epoch in range(epochs):
+        for epoch in range(1, epochs + 1):
             optimizer.zero_grad()
             y_pred = actor(x_train)
 
             loss = criterion(y_pred, y_train)
-            if epoch == 0 or epoch == epochs-1:
-                print(f"Epoch {epoch} loss: {loss}")
+            print(f"Epoch {epoch} loss: {loss}")
             loss.backward()
             optimizer.step()
+            scheduler.step()
         actor.eval()
         epsilon *= epsilon_decay
 
@@ -76,12 +80,12 @@ def play(size, num_games, batch_size, epochs, epsilon, epsilon_decay, save_inter
 
 
 if __name__ == "__main__":
-    play(size=5,
-         num_games=50,
+    play(size=7,
+         num_games=100,
          batch_size=128,
-         epochs=200,
+         epochs=50,
          epsilon=1,
          epsilon_decay=0.98,
-         save_interval=10,
-         time_budget=2,
+         save_interval=20,
+         time_budget=3,
          exploration=1)

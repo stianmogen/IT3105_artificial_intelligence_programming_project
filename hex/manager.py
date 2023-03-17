@@ -53,7 +53,6 @@ class MCTSAgent(PlayerInterface):
         self.actor = actor
         self.epsilon = epsilon
 
-
     def get_move(self):
         self.search(self.time_budget)
         move, visit_distribution = self.best_move()
@@ -76,6 +75,7 @@ class MCTSAgent(PlayerInterface):
             visits[move] = child.N
 
         visit_distribution = normalize(visits)
+
         #self.plot_dist(range(size*size), visit_distribution)
 
         # choose the move of the most simulated node breaking ties randomly
@@ -117,12 +117,14 @@ class MCTSAgent(PlayerInterface):
             node, state = self.select_node()
             player = state.current_player
             outcome = self.roll_out(state)
+
             self.backup(node, player, outcome)
             num_rollouts += 1
 
         stderr.write("Ran " + str(num_rollouts) + " rollouts in " + \
                      str(time.perf_counter() - startTime) + " sec\n")
         stderr.write("Node count: " + str(self.tree_size()) + "\n")
+
 
     def select_node(self):
         """
@@ -173,7 +175,9 @@ class MCTSAgent(PlayerInterface):
             if random.random() < self.epsilon:
                 move = random.choice(tuple(moves))
             else:
-                dist = self.actor(torch.tensor(state.board, dtype=torch.float32))
+                #torch.tensor(current_state, dtype=torch.float32)
+                input = np.append(state.current_player, state.board)
+                dist = self.actor(torch.tensor([input]))
                 move = torch.argmax(dist).item()
             state.place_piece(move)
         return state.winner
@@ -185,6 +189,7 @@ class MCTSAgent(PlayerInterface):
         """
         # note that reward is calculated for player who just played
         # at the node and not the next player to play
+
         if outcome == -1:
             reward = 0
         else:
