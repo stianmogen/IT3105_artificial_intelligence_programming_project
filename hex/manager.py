@@ -12,6 +12,7 @@ import numpy as np
 
 from game_state import HexGameState
 from nn.qNetwork import DQN
+from nn.testnet import NeuralNet
 import copy
 
 
@@ -42,7 +43,7 @@ class Node:
 
 class MCTSAgent(PlayerInterface):
 
-    def __init__(self, state: HexGameState, actor: DQN, epsilon=1, exploration=1, time_budget=5):
+    def __init__(self, state: HexGameState, actor: NeuralNet, epsilon=1, exploration=1, time_budget=5):
         self.rootstate = state
         self.root = Node()
         self.exploration = exploration
@@ -59,7 +60,7 @@ class MCTSAgent(PlayerInterface):
                 self.root = child
                 self.root.parent = None
                 break
-        return move, visit_distribution
+        return move, visit_distribution, self.root.Q
 
     def best_move(self):
         if self.rootstate.winner is not None:
@@ -74,7 +75,7 @@ class MCTSAgent(PlayerInterface):
 
         visit_distribution = normalize(visits)
 
-        self.plot_dist(range(size*size), visit_distribution)
+        #self.plot_dist(range(size*size), visit_distribution)
 
         # choose the move of the most simulated node breaking ties randomly
         max_value = max(visits)
@@ -175,9 +176,10 @@ class MCTSAgent(PlayerInterface):
                 move = random.choice(tuple(moves))
             else:
                 input = np.append(state.current_player, state.board)
-                dist = self.actor(torch.tensor([input]))
+                preds = self.actor.predict(np.array([input]))
+                y, x = self.actor.best_action(preds[0])
+                move = y * self.rootstate.size + x
 
-                move = torch.argmax(dist).item()
             state.place_piece(move)
         return state.winner
 

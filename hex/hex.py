@@ -5,6 +5,7 @@ import os
 from game_state import HexGameState
 from manager import MCTSAgent
 from nn.qNetwork import DQN
+from nn.testnet import NeuralNet
 from player import Player
 from nn.replayBuffer import ReplayBuffer
 
@@ -15,7 +16,8 @@ def play(size, num_games, batch_size, epochs, epsilon, epsilon_decay, save_inter
     if not os.path.exists(f"{size}X{size}"):
         os.makedirs(f"{size}X{size}")
 
-    actor = DQN(size=(size ** 2), embedding_size=embedding_size)
+    actor2 = DQN(size=(size ** 2), embedding_size=embedding_size)
+    actor = NeuralNet(nn_dims=(512, 256), board_size=size)
     replayBuffer = ReplayBuffer(capacity=buffer_size)
 
     # 4 for g in actual number of games
@@ -28,66 +30,70 @@ def play(size, num_games, batch_size, epochs, epsilon, epsilon_decay, save_inter
         player2 = MCTSAgent(board, actor=actor, epsilon=epsilon, time_budget=time_budget, exploration=exploration)
         # self.player2 = Player(name="2", board_size=size)
         print(f"GAME {ga}, epsilon = {epsilon}")
-        board.print_board()
+        # board.print_board()
         # 4 d while ba (board.winner) not in final state
         while not board.winner:
-            move, visit_dist = player1.get_move()
+
+            move, visit_dist, q = player1.get_move()
             state = np.append(board.current_player, board.clone_board())
             while not board.place_piece(move):
                 print('Place already filled, try again.')
-                move, visit_dist = player1.get_move()
-            replayBuffer.push([state, visit_dist])
-            board.print_board()
+                move, visit_dist, q = player1.get_move()
+            replayBuffer.push((state, visit_dist, q))
+            # board.print_board()
 
             if not board.winner:
-                move, visit_dist = player2.get_move()
+                move, visit_dist, q = player2.get_move()
                 state = np.append(board.current_player, board.clone_board())
                 while not board.place_piece(move):
                     print('Place already filled, try again.')
-                    move, visit_dist = player2.get_move()
+                    move, visit_dist, q = player2.get_move()
 
-                board.print_board()
-                replayBuffer.push([state, visit_dist])
-        print(f'Player {board.winner} wins!')
+                # board.print_board()
+                replayBuffer.push([state, visit_dist, q])
+        # print(f'Player {board.winner} wins!')
 
-        samples = replayBuffer.sample(batch_size)
+        samples = replayBuffer.sample(64)
 
         x_train = torch.tensor([sample[0] for sample in samples])
-        print(x_train)
+        #print(x_train)
         y_train = torch.tensor([sample[1] for sample in samples], dtype=torch.float32)
-        print(y_train.type())
+        #print(y_train.type())
 
         criterion = nn.CrossEntropyLoss()
-        optimizer = optim.Adam(actor.parameters(), lr=0.0001, betas=(0.5, 0.999))
-        scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
-        actor.train()
+        #optimizer = optim.Adam(actor.parameters(), lr=0.0001, betas=(0.5, 0.999))
+        #scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+        #actor.train()
+        actor.fit(samples)
 
-        for epoch in range(1, epochs + 1):
-            optimizer.zero_grad()
-            y_pred = actor(x_train)
+        #for epoch in range(1, epochs + 1):
+            #optimizer.zero_grad()
+            #y_pred = actor(x_train)
 
-            loss = criterion(y_pred, y_train)
-            print(f"Epoch {epoch} loss: {loss}")
-            loss.backward()
-            optimizer.step()
-            scheduler.step()
-        actor.eval()
+            #loss = criterion(y_pred, y_train)
+            #if epoch % 100 == 0:
+                #print(f"Epoch {epoch} loss: {loss}")
+            #loss.backward()
+            #optimizer.step()
+            #scheduler.step()
+        #actor.eval()
+
         epsilon *= epsilon_decay
 
         # 4f) if ga modulo is == 0:
-        if ga % save_interval == 0:
-            torch.save(actor.state_dict(), f"{size}X{size}/game{ga}")
+        #if ga % save_interval == 0:
+        #    torch.save(actor.state_dict(), f"{size}X{size}/game{ga}")
 
 
 if __name__ == "__main__":
-    play(size=7,
+    play(size=4,
          num_games=200,
-         batch_size=256,
-         epochs=100,
+         batch_size=64,
+         epochs=1000,
          epsilon=1,
          epsilon_decay=0.99,
          save_interval=40,
-         time_budget=1,
+         time_budget=0.1,
          exploration=1,
          embedding_size=3,
-         buffer_size=1024)
+         buffer_size=256)

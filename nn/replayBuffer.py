@@ -23,7 +23,8 @@ class ReplayBuffer:
             batch_size = self.__len__()
 
         # sample method might
-        return random.sample(self.memory, batch_size)
+        res = random.sample(self.memory, batch_size)
+        return res
 
     def __len__(self):
         return len(self.memory)
