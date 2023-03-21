@@ -28,14 +28,17 @@ class Node:
         self.N = 0
         self.Q = 0
 
-    def value(self, explore):
+    def value(self, explore, is_maximizing):
         if self.N == 0:
             if explore == 0:
                 return 0
             else:
                 return np.inf
         else:
-            return self.Q / self.N + explore * np.sqrt(2 * np.log(self.parent.N) / self.N)
+            if is_maximizing:
+                return self.Q / self.N + explore * np.sqrt(2 * np.log(self.parent.N) / self.N)
+            else:
+                return self.Q / self.N - explore * np.sqrt(2 * np.log(self.parent.N) / self.N)
 
     def add_children(self, children):
         self.children += children
@@ -43,7 +46,7 @@ class Node:
 
 class MCTSAgent(PlayerInterface):
 
-    def __init__(self, state: HexGameState, actor: NeuralNet, epsilon=1, exploration=1, time_budget=5):
+    def __init__(self, state: HexGameState, actor, epsilon=1, exploration=1, time_budget=5):
         self.rootstate = state
         self.root = Node()
         self.exploration = exploration
@@ -93,13 +96,10 @@ class MCTSAgent(PlayerInterface):
             return None
 
         size = self.rootstate.size
-        #output = np.zeros([2, size*size], dtype=object)
         visits = np.zeroes(size*size)
         for child in self.root.children:
             move = child.move
-            #output[0][y * size + x] = child.move
             visits[move] = child.N
-        #output[1:2, :] = normalize(output[1:2, :])
         D = normalize(visits)
         return self.rootstate.board, D
 
@@ -115,16 +115,14 @@ class MCTSAgent(PlayerInterface):
         num_rollouts = 0
         while time.perf_counter() - startTime < time_budget:
             node, state = self.select_node()
-            player = state.current_player
-            outcome = self.roll_out(state)
+            winner = self.roll_out(state)
 
-            self.backup(node, player, outcome)
+            self.backup(node, winner)
             num_rollouts += 1
 
-        stderr.write("Ran " + str(num_rollouts) + " rollouts in " + \
-                     str(time.perf_counter() - startTime) + " sec\n")
-        stderr.write("Node count: " + str(self.tree_size()) + "\n")
-
+        #stderr.write("Ran " + str(num_rollouts) + " rollouts in " + \
+                     #str(time.perf_counter() - startTime) + " sec\n")
+        #stderr.write("Node count: " + str(self.tree_size()) + "\n")
 
     def select_node(self):
         """
@@ -136,9 +134,14 @@ class MCTSAgent(PlayerInterface):
 
         while len(node.children) != 0:
             # decend to the maximum value node, break ties at random
-            max_value = max(node.children, key=lambda n: n.value(self.exploration)).value(self.exploration)
-            max_nodes = [n for n in node.children if n.value(self.exploration) == max_value]
-            node = random.choice(max_nodes)
+            if state.current_player == 1:
+                max_value = max(node.children, key=lambda n: n.value(self.exploration, True)).value(self.exploration, True)
+                nodes = [n for n in node.children if n.value(self.exploration, True) == max_value]
+            else:
+                min_value = min(node.children, key=lambda n: n.value(self.exploration, False)).value(self.exploration, False)
+                nodes = [n for n in node.children if n.value(self.exploration, False) == min_value]
+
+            node = random.choice(nodes)
             move = node.move
             state.place_piece(move)
 
@@ -175,15 +178,13 @@ class MCTSAgent(PlayerInterface):
             if random.random() < self.epsilon:
                 move = random.choice(tuple(moves))
             else:
-                input = np.append(state.current_player, state.board)
-                preds = self.actor.predict(np.array([input]))
-                y, x = self.actor.best_action(preds[0])
-                move = y * self.rootstate.size + x
+                input = np.expand_dims(np.append(state.current_player, state.board), axis=0)
+                move = self.actor.best_move(input)
 
             state.place_piece(move)
         return state.winner
 
-    def backup(self, node, turn, outcome):
+    def backup(self, node, winner):
         """
         Update the node statistics on the path from the passed node to root to reflect
         the outcome of a randomly simulated playout.
@@ -191,8 +192,7 @@ class MCTSAgent(PlayerInterface):
         # note that reward is calculated for player who just played
         # at the node and not the next player to play
 
-
-        reward = -1 if outcome == turn else 1
+        reward = 1 if winner == 1 else -1
 
         while node is not None:
             node.N += 1

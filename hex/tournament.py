@@ -51,7 +51,7 @@ def run_tournament():
         f = os.path.join(actors_dir, filename)
         # checking if it is a file
         if os.path.isfile(f):
-            if filename == "game40" or filename == "game40old":
+            if filename == "game50.h5" or filename == "game300.h5":
                 print(filename)
                 actors_names.append(filename)
                 model = DQN(size * size)

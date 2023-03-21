@@ -1,5 +1,9 @@
 import random
 
+import numpy as np
+from keras import Input, Model
+from keras.layers import Dense, Embedding, Dropout
+from keras.optimizers import Adam
 from torch import nn
 import torch
 
@@ -21,10 +25,10 @@ class Anet(nn.Module):
         self.init_weights()
 
     def forward(self, x):
-        #mask = torch.where(x == 0, 1, 0)[:, 1:]
+        mask = torch.where(x == 0, 1, 0)[:, 1:]
         output = self.nn(x)
 
-        #masked = torch.mul(output, mask)
+        masked = torch.mul(output, mask)
         return nn.functional.sigmoid(output)
 
     def init_weights(self):
@@ -68,3 +72,40 @@ if __name__ == "__main__":
         loss.backward()
         optimizer.step()
         #scheduler.step()
+
+
+
+
+class Anet2:
+    def __init__(self, input_dim, output_dim, hidden_dims=(256, 512, 512, 128), dropout_rate=0.5):
+        input_tensor = Input(shape=input_dim)
+        for i in range(len(hidden_dims)):
+            if i == 0:
+                x = Dense(hidden_dims[i], activation='relu')(input_tensor)
+            else:
+                x = Dense(hidden_dims[i], activation='relu')(x)
+            x = Dropout(dropout_rate)(x)
+
+        output = Dense(output_dim, activation="softmax")(x)
+        self.model = Model(input_tensor, output)
+        self.model.compile(optimizer=Adam(learning_rate=1e-3), loss="kl_divergence")
+        self.model.summary()
+
+    def predict(self, x):
+        mask = np.where(x == 0, 1, 0)[:, 1:]
+        output = self.model(x)
+        masked = np.multiply(output, mask)
+        return np.divide(masked, np.sum(masked))
+
+    def fit(self, samples):
+        x = np.array([sample[0] for sample in samples])
+        y = np.array([sample[1] for sample in samples], dtype=np.float32)
+        self.model.fit(x, y, epochs=10)
+
+    def best_move(self, x):
+        predictions = self.predict(x)
+        return np.argmax(predictions)
+
+    def save_model(self, name):
+        self.model.save(f"{name}.h5")
+        print(f"Model {name}.h5 saved succesfully")

@@ -23,11 +23,11 @@ optimizers = {
 class NeuralNet:
     def __init__(
         self,
-        nn_dims = (17),
-        board_size = 3,
-        lr = 0.01,
-        activation = ["sigmoid", "tanh"],
-        optimizer  = "adam",
+        nn_dims=(512,256),
+        board_size=3,
+        lr=0.01,
+        activation=["sigmoid", "tanh"],
+        optimizer="adam",
         load_saved_model=False,
         episode_number=0,
     ):
@@ -115,7 +115,7 @@ class NeuralNet:
         return move
 
     def save_model(self, model_name, episode_number):
-        self.model.save("project2/models/{0}{1}.h5".format(model_name, episode_number))
+        self.model.save("{0}{1}.h5".format(model_name, episode_number))
         print("Model {0}{1} saved succesfully".format(model_name, episode_number))
 
     def load_saved_model(self, episode_number):
