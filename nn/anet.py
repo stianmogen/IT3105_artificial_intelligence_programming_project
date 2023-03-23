@@ -3,9 +3,10 @@ import random
 import numpy as np
 import keras
 from keras import Input, Model
-from keras.layers import Dense, Embedding, Dropout
+from keras.layers import Dense, Embedding, Dropout, Flatten
 from keras.models import load_model
 from keras.optimizers import Adam
+
 
 
 class Anet2:
@@ -21,6 +22,7 @@ class Anet2:
                 x = Dense(hidden_dim, activation='relu')(x)
                 x = Dropout(dropout_rate)(x)
 
+            x = Flatten()(x)
             output = Dense(output_dim, activation="softmax")(x)
             self.model = Model(input_tensor, output)
             self.model.compile(optimizer=Adam(learning_rate=1e-3), loss="kl_divergence")
@@ -35,7 +37,7 @@ class Anet2:
     def fit(self, samples):
         x = np.array([sample[0] for sample in samples])
         y = np.array([sample[1] for sample in samples], dtype=np.float32)
-        self.model.fit(x, y, epochs=10)
+        self.model.fit(x, y, verbose=1, batch_size=64)
 
     def best_move(self, x):
         predictions = self.predict(x)

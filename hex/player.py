@@ -20,4 +20,4 @@ class Player(PlayerInterface):
         y = int(y)
         x = int(x)
 
-        return y, x
+        return y * self.board_size + x

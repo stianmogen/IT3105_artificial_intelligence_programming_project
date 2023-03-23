@@ -50,17 +50,18 @@ def run_tournament():
         f = os.path.join(actors_dir, filename)
         # checking if it is a file
         if os.path.isfile(f):
-            if filename == "game50.h5" or filename == "game400.h5":
+            if filename == "4x4_ep300.h5" or filename == "game1000.h5":
                 print(filename)
                 actors_names.append(filename)
 
                 model = Anet2(load_path=f)
+                print(f)
                 actors.append(model)
 
     for i in range(len(actors)):
         for j in range(i+1, len(actors)):
             print(f"{actors_names[i]} vs {actors_names[j]}")
-            actor1_wins, actor2_wins = run_series(actors[i], actors[j], board_size=size, num_games=20, epsilon=0, time_budget=.2,
+            actor1_wins, actor2_wins = run_series(actors[i], actors[j], board_size=size, num_games=100, epsilon=0, time_budget=.2,
                                     exploration=1)
             print(f"{actors_names[i]} victories: {actor1_wins}")
             print(f"{actors_names[j]} victories: {actor2_wins}")

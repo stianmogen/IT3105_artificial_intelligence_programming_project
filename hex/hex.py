@@ -13,12 +13,12 @@ from nn.replayBuffer import ReplayBuffer
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def play(size, num_games, batch_size, epochs, epsilon, epsilon_decay, save_interval, time_budget, exploration, embedding_size, buffer_size):
+def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, save_interval, time_budget, exploration, embedding_size, buffer_size):
     if not os.path.exists(f"{size}X{size}"):
         os.makedirs(f"{size}X{size}")
 
-    actor2 = DQN(size=(size ** 2), embedding_size=embedding_size)
     actor = Anet2(input_dim=(size ** 2 + 1), output_dim=(size ** 2))
+    actor2 = Anet2(load_path="4X4/game1000.h5")
     #actor = NeuralNet(nn_dims=(512, 256), board_size=size)
     replayBuffer = ReplayBuffer(capacity=buffer_size)
 
@@ -28,9 +28,9 @@ def play(size, num_games, batch_size, epochs, epsilon, epsilon_decay, save_inter
         # 4 b starting board state are default value at initialization
         board = HexGameState(size)
         # 4 c init monte carlo (maybe limit to one mctsa and consider current player)
-        player1 = MCTSAgent(board, actor=actor, epsilon=epsilon, time_budget=time_budget, exploration=exploration)
+        player1 = MCTSAgent(board, actor=actor2, epsilon=epsilon, sigma=sigma, time_budget=time_budget, exploration=exploration)
         #player2 = MCTSAgent(board, actor=actor, epsilon=epsilon, time_budget=time_budget, exploration=exploration)
-        # self.player2 = Player(name="2", board_size=size)
+        player2 = Player(name="2", board_size=size)
         print(f"GAME {ga}, epsilon = {epsilon}")
         # board.print_board()
         # 4 d while ba (board.winner) not in final state
@@ -42,7 +42,7 @@ def play(size, num_games, batch_size, epochs, epsilon, epsilon_decay, save_inter
                 print('Place already filled, try again.')
                 move, visit_dist, q = player1.get_move()
             replayBuffer.push((state, visit_dist, q))
-            #board.print_board()
+            board.print_board()
 
             if not board.winner:
                 move, visit_dist, q = player1.get_move()
@@ -51,7 +51,7 @@ def play(size, num_games, batch_size, epochs, epsilon, epsilon_decay, save_inter
                     print('Place already filled, try again.')
                     move, visit_dist, q = player1.get_move()
 
-                #board.print_board()
+                board.print_board()
                 replayBuffer.push([state, visit_dist, q])
         # print(f'Player {board.winner} wins!')
 
@@ -59,6 +59,7 @@ def play(size, num_games, batch_size, epochs, epsilon, epsilon_decay, save_inter
         actor.fit(samples)
 
         epsilon *= epsilon_decay
+        sigma *= epsilon_decay
 
         # 4f) if ga modulo is == 0:
         if ga % save_interval == 0:
@@ -70,10 +71,11 @@ if __name__ == "__main__":
          num_games=1000,
          batch_size=64,
          epochs=1000,
-         epsilon=1,
+         epsilon=0.5,
+         sigma=2,
          epsilon_decay=0.99,
          save_interval=50,
          time_budget=0.1,
          exploration=1,
          embedding_size=3,
-         buffer_size=1024)
+         buffer_size=512)

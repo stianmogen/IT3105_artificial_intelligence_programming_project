@@ -46,7 +46,7 @@ class Node:
 
 class MCTSAgent(PlayerInterface):
 
-    def __init__(self, state: HexGameState, actor, epsilon=1, exploration=1, time_budget=5):
+    def __init__(self, state: HexGameState, actor, epsilon=1, sigma=1.5, exploration=1, time_budget=5):
         self.rootstate = state
         self.root = Node()
         self.exploration = exploration
@@ -54,6 +54,7 @@ class MCTSAgent(PlayerInterface):
         self.board_size = state.size
         self.actor = actor
         self.epsilon = epsilon
+        self.sigma = sigma
 
     def get_move(self):
         self.search(self.time_budget)
@@ -75,10 +76,9 @@ class MCTSAgent(PlayerInterface):
         for child in self.root.children:
             move = child.move
             visits[move] = child.N
-
         visit_distribution = normalize(visits)
 
-        #self.plot_dist(range(size*size), visit_distribution)
+        #self.plot_dist(range(size*size), visits)
 
         # choose the move of the most simulated node breaking ties randomly
         max_value = max(visits)
@@ -104,25 +104,29 @@ class MCTSAgent(PlayerInterface):
         return self.rootstate.board, D
 
     def search(self, time_budget):
+        '''
         last_move = self.rootstate.last_move
         if self.root.move and last_move != self.root.move:
             for child in self.root.children:
                 if child.move == last_move:
                     self.root = child
                     self.root.parent = None
+        '''
+
+        self.root = Node()
 
         startTime = time.perf_counter()
         num_rollouts = 0
         while time.perf_counter() - startTime < time_budget:
             node, state = self.select_node()
             winner = self.roll_out(state)
-
             self.backup(node, winner)
             num_rollouts += 1
-
-        #stderr.write("Ran " + str(num_rollouts) + " rollouts in " + \
-                     #str(time.perf_counter() - startTime) + " sec\n")
-        #stderr.write("Node count: " + str(self.tree_size()) + "\n")
+        """
+        stderr.write("Ran " + str(num_rollouts) + " rollouts in " + \
+                     str(time.perf_counter() - startTime) + " sec\n")
+        stderr.write("Node count: " + str(self.tree_size()) + "\n")
+        """
 
     def select_node(self):
         """
@@ -174,13 +178,11 @@ class MCTSAgent(PlayerInterface):
 
     def roll_out(self, state: HexGameState):
         moves = state.empty_spaces
+        if random.random() > self.sigma:
+            input = np.expand_dims(np.append(state.current_player, state.board), axis=0)
+            move = self.actor.best_move(input)
         while state.winner is None:
-            if random.random() < self.epsilon:
-                move = random.choice(tuple(moves))
-            else:
-                input = np.expand_dims(np.append(state.current_player, state.board), axis=0)
-                move = self.actor.best_move(input)
-
+            move = random.choice(tuple(moves))
             state.place_piece(move)
         return state.winner
 
@@ -192,11 +194,11 @@ class MCTSAgent(PlayerInterface):
         # note that reward is calculated for player who just played
         # at the node and not the next player to play
 
-        reward = 1 if winner == 1 else -1
+        reward = 1 if winner == 1 else -10
 
         while node is not None:
             node.N += 1
-            node.Q += reward
+            node.Q += (reward - node.Q / (1 + node.N))
             reward = -reward
             node = node.parent
 
