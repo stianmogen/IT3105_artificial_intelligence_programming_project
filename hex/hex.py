@@ -67,15 +67,15 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sav
 
 
 if __name__ == "__main__":
-    play(size=4,
+    play(size=6,
          num_games=1000,
          batch_size=64,
          epochs=1000,
-         epsilon=0.5,
+         epsilon=1,
          sigma=2,
          epsilon_decay=0.99,
          save_interval=50,
-         time_budget=0.1,
+         time_budget=1,
          exploration=1,
          embedding_size=3,
          buffer_size=512)
