@@ -65,9 +65,9 @@ class MCTSAgent(PlayerInterface):
         self.epsilon = epsilon
         self.sigma = sigma
 
-    def get_move(self):
+    def get_move(self, plot_choice=False):
         self.search(self.time_budget)
-        move, visit_distribution = self.best_move()
+        move, visit_distribution = self.best_move(plot_choice)
         for child in self.root.children:
             if child.move == move:
                 self.root = child
@@ -75,7 +75,7 @@ class MCTSAgent(PlayerInterface):
                 break
         return move, visit_distribution, self.root.Q
 
-    def best_move(self):
+    def best_move(self, plot_choice=False):
         if self.rootstate.winner is not None:
             return None
 
@@ -87,7 +87,8 @@ class MCTSAgent(PlayerInterface):
             visits[move] = child.N
         visit_distribution = normalize(visits)
 
-        self.plot_dist(range(size*size), visits)
+        if plot_choice:
+            self.plot_dist(range(size*size), visits)
 
         # choose the move of the most simulated node breaking ties randomly
         max_value = max(visits)
@@ -132,9 +133,9 @@ class MCTSAgent(PlayerInterface):
             self.backup(node, player, outcome)
             num_rollouts += 1
 
-        stderr.write("Ran " + str(num_rollouts) + " rollouts in " + \
-                     str(time.perf_counter() - startTime) + " sec\n")
-        stderr.write("Node count: " + str(self.tree_size()) + "\n")
+        #stderr.write("Ran " + str(num_rollouts) + " rollouts in " + \
+        #             str(time.perf_counter() - startTime) + " sec\n")
+        #stderr.write("Node count: " + str(self.tree_size()) + "\n")
 
 
     def select_node(self):
@@ -199,7 +200,6 @@ class MCTSAgent(PlayerInterface):
             else:
                 input = np.expand_dims(np.append(state.current_player, state.board), axis=0)
                 move = self.actor.best_move(input)
-
             state.place_piece(move)
         return state.winner
 
