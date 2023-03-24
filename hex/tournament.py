@@ -23,13 +23,14 @@ def run_series(actor1, actor2, board_size, num_games, epsilon, time_budget, expl
         while not board.winner:
             move, _, _ = player1.get_move()
             board.place_piece(move)
+            board.print_board()
             if not board.winner:
                 move, _, _ = player2.get_move()
                 board.place_piece(move)
-                #board.print_board()
-        #print("WINNER", board.winner)
-        #print("W=", w, "B=", b)
-        #board.print_board()
+                board.print_board()
+        print("WINNER", board.winner)
+        print("W=", w, "B=", b)
+        board.print_board()
 
         winner = w if board.winner == 1 else b
         statistics[winner] += 1
@@ -44,13 +45,13 @@ def run_series(actor1, actor2, board_size, num_games, epsilon, time_budget, expl
 def run_tournament():
     actors = []
     actors_names = []
-    size = 4
+    size = 5
     actors_dir = f"{size}X{size}"
     for filename in os.listdir(actors_dir):
         f = os.path.join(actors_dir, filename)
         # checking if it is a file
         if os.path.isfile(f):
-            if filename == "4x4_ep300.h5" or filename == "game1000.h5":
+            if filename == "game300.h5" or filename == "game1000.h5":
                 print(filename)
                 actors_names.append(filename)
 
@@ -61,7 +62,7 @@ def run_tournament():
     for i in range(len(actors)):
         for j in range(i+1, len(actors)):
             print(f"{actors_names[i]} vs {actors_names[j]}")
-            actor1_wins, actor2_wins = run_series(actors[i], actors[j], board_size=size, num_games=100, epsilon=0, time_budget=.2,
+            actor1_wins, actor2_wins = run_series(actors[i], actors[j], board_size=size, num_games=100, epsilon=0, time_budget=1,
                                     exploration=1)
             print(f"{actors_names[i]} victories: {actor1_wins}")
             print(f"{actors_names[j]} victories: {actor2_wins}")

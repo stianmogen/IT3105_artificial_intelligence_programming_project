@@ -18,7 +18,7 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sav
         os.makedirs(f"{size}X{size}")
 
     actor = Anet2(input_dim=(size ** 2 + 1), output_dim=(size ** 2))
-    actor2 = Anet2(load_path="4X4/game1000.h5")
+    actor2 = Anet2(load_path="5X5/game1000.h5")
     #actor = NeuralNet(nn_dims=(512, 256), board_size=size)
     replayBuffer = ReplayBuffer(capacity=buffer_size)
 
@@ -42,7 +42,7 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sav
                 print('Place already filled, try again.')
                 move, visit_dist, q = player1.get_move()
             replayBuffer.push((state, visit_dist, q))
-            board.print_board()
+            #board.print_board()
 
             if not board.winner:
                 move, visit_dist, q = player1.get_move()
@@ -51,7 +51,7 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sav
                     print('Place already filled, try again.')
                     move, visit_dist, q = player1.get_move()
 
-                board.print_board()
+                #board.print_board()
                 replayBuffer.push([state, visit_dist, q])
         # print(f'Player {board.winner} wins!')
 
@@ -67,15 +67,15 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sav
 
 
 if __name__ == "__main__":
-    play(size=6,
+    play(size=5,
          num_games=1000,
          batch_size=64,
          epochs=1000,
-         epsilon=1,
+         epsilon=0.5,
          sigma=2,
          epsilon_decay=0.99,
-         save_interval=50,
-         time_budget=1,
+         save_interval=500,
+         time_budget=0.5,
          exploration=1,
          embedding_size=3,
          buffer_size=512)
