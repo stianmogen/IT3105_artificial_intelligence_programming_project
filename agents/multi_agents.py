@@ -1,6 +1,6 @@
 from hex.game_state import HexGameState
-from hex.manager import Node
-from nn.neuralNet import NeuralNet
+from hex.mcts_agent import Node
+from nn.neural_net import NeuralNet
 
 
 class MonteCarlo:

@@ -27,15 +27,15 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sav
         while hex_game.winner == 0:
             move, visit_dist, q = player1.get_move()
             state = np.append(hex_game.current_player, hex_game.clone_board())
+
             hex_game.place_piece(move)
             replayBuffer.push((state, visit_dist, q))
             #hex_game.print_board()
 
         print(f'Player {hex_game.winner} wins!')
 
-
-        samples = replayBuffer.sample(buffer_size // 2)
-        actor.fit(samples)
+        samples = replayBuffer.sample(batch_size)
+        actor.fit(samples, epochs=epochs)
         print(actor.predict(np.array([[1, 1, 1, 1, 1, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])))
         epsilon *= epsilon_decay
         sigma *= epsilon_decay
@@ -46,14 +46,14 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sav
 
 if __name__ == "__main__":
     play(size=5,
-         num_games=100,
+         num_games=1000,
          batch_size=64,
-         epochs=1000,
+         epochs=1,
          epsilon=1.5,
          sigma=2,
-         epsilon_decay=0.99,
+         epsilon_decay=0.999,
          save_interval=20,
-         time_budget=0.2,
+         time_budget=1,
          exploration=1,
          embedding_size=3,
-         buffer_size=512)
+         buffer_size=1024)
