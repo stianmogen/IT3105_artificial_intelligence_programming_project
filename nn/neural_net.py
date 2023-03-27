@@ -6,8 +6,8 @@ import torch.optim as optim
 from collections import namedtuple, deque
 
 from hex.game_state import HexGameState
-from nn.qNetwork import DQN
-from nn.replayBuffer import ReplayBuffer
+from nn.qnet import DQN
+from nn.replay_buffer import ReplayBuffer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

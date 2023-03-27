@@ -1,7 +1,6 @@
 import numpy as np
 
 
-
 class Node:
     def __init__(self, move=None, parent=None):
         self.move = move

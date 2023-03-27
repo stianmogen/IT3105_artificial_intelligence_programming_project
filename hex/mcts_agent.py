@@ -1,83 +1,36 @@
 import random
 import time
-from queue import Queue
 from sys import stderr
 
-import torch
-
-from player import PlayerInterface
 import matplotlib.pyplot as plt
-
 import numpy as np
-
-from game_state import HexGameState
-from nn.qNetwork import DQN
-from nn.testnet import NeuralNet
 import copy
-
-
-def normalize(x):
-    return x / x.sum()
-
-
-class Node:
-    def __init__(self, move=None, parent=None):
-        self.move = move
-        self.parent = parent
-        self.children = []
-        self.N = 0
-        self.Q = 0
-
-    def value(self, explore):
-        if self.N == 0:
-            if explore == 0:
-                return 0
-            else:
-                return np.inf
-        else:
-            return self.Q / self.N + explore * np.sqrt(2 * np.log(self.parent.N) / self.N)
-
-    def value2(self, explore, is_maximizing):
-        if self.N == 0:
-            if explore == 0:
-                return 0
-            else:
-                return np.inf
-        else:
-            if is_maximizing:
-                return self.Q / self.N + explore * np.sqrt(2 * np.log(self.parent.N) / self.N)
-            else:
-                return self.Q / self.N - explore * np.sqrt(2 * np.log(self.parent.N) / self.N)
-
-    def add_children(self, children):
-        self.children += children
+from queue import Queue
+from node import Node
+from player import PlayerInterface
+from utilities import normalize
 
 
 class MCTSAgent(PlayerInterface):
 
-    def __init__(self, state: HexGameState, actor, epsilon=1, sigma=1.5, exploration=1, time_budget=5):
+    def __init__(self, state, actor, epsilon=1, sigma=1.5, exploration=1, time_budget=5):
         self.rootstate = state
         self.root = Node()
         self.exploration = exploration
         self.time_budget = time_budget
-        self.board_size = state.size
         self.actor = actor
         self.epsilon = epsilon
         self.sigma = sigma
 
-    def get_move(self, plot_choice=False):
+    def get_move(self):
         self.search(self.time_budget)
-        move, visit_distribution = self.best_move(plot_choice)
-        for child in self.root.children:
-            if child.move == move:
-                self.root = child
-                self.root.parent = None
-                break
+        move, visit_distribution = self.best_move()
+
         return move, visit_distribution, self.root.Q
 
-    def best_move(self, plot_choice=False):
-        if self.rootstate.winner is not None:
-            return None
+    def best_move(self):
+        if self.rootstate.winner != 0:
+            raise Exception("The board already has a winner")
 
         size = self.rootstate.size
         visits = np.zeros(size*size)
@@ -87,8 +40,7 @@ class MCTSAgent(PlayerInterface):
             visits[move] = child.N
         visit_distribution = normalize(visits)
 
-        if plot_choice:
-            self.plot_dist(range(size*size), visits)
+        #self.plot_dist(range(size*size), visits)
 
         # choose the move of the most simulated node breaking ties randomly
         max_value = max(visits)
@@ -114,29 +66,22 @@ class MCTSAgent(PlayerInterface):
         return self.rootstate.board, D
 
     def search(self, time_budget):
+        self.root = Node()
 
-        last_move = self.rootstate.last_move
-        if self.root.move and last_move != self.root.move:
-            for child in self.root.children:
-                if child.move == last_move:
-                    self.root = child
-                    self.root.parent = None
-
-
-        #self.root = Node()
         startTime = time.perf_counter()
         num_rollouts = 0
         while time.perf_counter() - startTime < time_budget:
             node, state = self.select_node()
-            outcome = state.current_player
-            player = self.roll_out(state)
+            player = state.current_player
+            outcome = self.roll_out(state)
             self.backup(node, player, outcome)
             num_rollouts += 1
 
-        #stderr.write("Ran " + str(num_rollouts) + " rollouts in " + \
-        #             str(time.perf_counter() - startTime) + " sec\n")
-        #stderr.write("Node count: " + str(self.tree_size()) + "\n")
-
+        """
+        stderr.write("Ran " + str(num_rollouts) + " rollouts in " + \
+                     str(time.perf_counter() - startTime) + " sec\n")
+        stderr.write("Node count: " + str(self.tree_size()) + "\n")
+        """
 
     def select_node(self):
         """
@@ -182,7 +127,7 @@ class MCTSAgent(PlayerInterface):
         moves in the passed HexGameState and add them to the tree.
         """
         children = []
-        if state.winner is not None:
+        if state.winner != 0:
             # game is over at this node so nothing to expand
             return False
 
@@ -192,9 +137,9 @@ class MCTSAgent(PlayerInterface):
         parent.add_children(children)
         return True
 
-    def roll_out(self, state: HexGameState):
+    def roll_out(self, state):
         moves = state.empty_spaces
-        while state.winner is None:
+        while state.winner == 0:
             if random.random() < self.epsilon:
                 move = random.choice(tuple(moves))
             else:
@@ -203,17 +148,17 @@ class MCTSAgent(PlayerInterface):
             state.place_piece(move)
         return state.winner
 
-    def roll_out2(self, state: HexGameState):
+    def roll_out2(self, state):
         moves = state.empty_spaces
         if random.random() > self.epsilon:
             input = np.expand_dims(np.append(state.current_player, state.board), axis=0)
             move = self.actor.best_move(input)
-        while state.winner is None:
+        while state.winner == 0:
             move = random.choice(tuple(moves))
         state.place_piece(move)
         return state.winner
 
-    def backup(self, node, turn, outcome):
+    def backup(self, node, player, outcome):
         """
         Update the node statistics on the path from the passed node to root to reflect
         the outcome of a randomly simulated playout.
@@ -221,11 +166,11 @@ class MCTSAgent(PlayerInterface):
         # note that reward is calculated for player who just played
         # at the node and not the next player to play
 
-        reward = -1 if outcome == turn else 1
+        reward = -1 if outcome == player else 1
 
         while node is not None:
             node.N += 1
-            node.Q += (reward - node.Q / (1 + node.N))
+            node.Q += (reward - node.Q) / (1 + node.N)
             reward = -reward
             node = node.parent
 
