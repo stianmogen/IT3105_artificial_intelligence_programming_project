@@ -58,7 +58,7 @@ def run_tournament():
         f = os.path.join(actors_dir, filename)
         # checking if it is a file
         if os.path.isfile(f):
-            if filename == "game3.h5" or filename == "game100.h5":
+            if filename == "game720.h5" or filename == "game3.h5":
                 model = Anet2(load_path=f)
                 actors.append(Actor(filename, model))
                 print(model.predict(np.array([[1, 1, 1, 1, 1, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])))

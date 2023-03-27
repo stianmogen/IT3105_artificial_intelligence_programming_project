@@ -36,7 +36,6 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sav
 
         samples = replayBuffer.sample(batch_size)
         actor.fit(samples, epochs=epochs)
-        print(actor.predict(np.array([[1, 1, 1, 1, 1, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])))
         epsilon *= epsilon_decay
         sigma *= epsilon_decay
 
@@ -47,13 +46,13 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sav
 if __name__ == "__main__":
     play(size=5,
          num_games=1000,
-         batch_size=64,
+         batch_size=256,
          epochs=1,
          epsilon=1.5,
          sigma=2,
          epsilon_decay=0.999,
          save_interval=20,
-         time_budget=1,
+         time_budget=.1,
          exploration=1,
          embedding_size=3,
          buffer_size=1024)

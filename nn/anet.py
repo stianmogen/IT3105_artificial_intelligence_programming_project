@@ -10,19 +10,19 @@ from keras.optimizers import Adam
 
 
 class Anet2:
-    def __init__(self, input_dim=17, output_dim=16, hidden_dims=(256, 512, 128), dropout_rate=0.2, load_path=None):
+    def __init__(self, input_dim=17, output_dim=16, hidden_dims=(126, 512, 128), dropout_rate=0.2, load_path=None):
         self.load_path = load_path
         if self.load_path is not None:
             self.model = self.load_saved_model(load_path)
         else:
             input_tensor = Input(shape=(input_dim,))
+            x = Embedding(input_dim=3, output_dim=4, input_length=input_dim)(input_tensor)
 
-            for i in range(len(hidden_dims)):
-                if i == 0:
-                    x = Dense(hidden_dims[i], activation='relu')(input_tensor)
-                else:
-                    x = Dense(hidden_dims[i], activation='relu')(x)
+            for hidden_dim in hidden_dims:
+                x = Dense(hidden_dim, activation='relu')(x)
                 x = Dropout(dropout_rate)(x)
+
+            x = Flatten()(x)
 
             output = Dense(output_dim, activation="softmax")(x)
             self.model = Model(input_tensor, output)
