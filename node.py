@@ -16,7 +16,7 @@ class Node:
             else:
                 return np.inf
         else:
-            return self.Q / self.N + explore * np.sqrt(np.log(self.parent.N) / self.N)
+            return self.Q + explore * np.sqrt(np.log(self.parent.N) / self.N)
 
     def add_children(self, children):
         self.children += children

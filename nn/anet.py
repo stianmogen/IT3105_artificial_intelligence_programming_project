@@ -10,7 +10,7 @@ from keras.optimizers import Adam
 
 
 class Anet2:
-    def __init__(self, input_dim=17, output_dim=16, hidden_dims=(256, 512, 128), load_path=None):
+    def __init__(self, input_dim=17, output_dim=16, hidden_dims=(256, 512, 128), dropout_rate=0.2, load_path=None):
         self.load_path = load_path
         if self.load_path is not None:
             self.model = self.load_saved_model(load_path)
@@ -22,7 +22,7 @@ class Anet2:
                     x = Dense(hidden_dims[i], activation='relu')(input_tensor)
                 else:
                     x = Dense(hidden_dims[i], activation='relu')(x)
-                #x = Dropout(dropout_rate)(x)
+                x = Dropout(dropout_rate)(x)
 
             output = Dense(output_dim, activation="softmax")(x)
             self.model = Model(input_tensor, output)
@@ -35,10 +35,10 @@ class Anet2:
         masked = np.multiply(output, mask)
         return np.divide(masked, np.sum(masked))
 
-    def fit(self, samples):
+    def fit(self, samples, epochs):
         x = np.array([sample[0] for sample in samples])
         y = np.array([sample[1] for sample in samples], dtype=np.float32)
-        self.model.fit(x, y, verbose=1, batch_size=64, epochs=5)
+        self.model.fit(x, y, verbose=1, epochs=epochs)
 
     def best_move(self, x):
         predictions = self.predict(x)
