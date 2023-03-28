@@ -11,7 +11,7 @@ from nn.replay_buffer import ReplayBuffer
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, save_interval, time_budget, exploration, embedding_size, buffer_size):
+def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, save_interval, rollouts, exploration, embedding_size, buffer_size):
     if not os.path.exists(f"{size}X{size}"):
         os.makedirs(f"{size}X{size}")
 
@@ -20,7 +20,7 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sav
 
     for ga in range(1, num_games + 1):
         hex_game = HexGameState(size)
-        player1 = MCTSAgent(hex_game, actor=actor, epsilon=epsilon, sigma=sigma, time_budget=time_budget, exploration=exploration)
+        player1 = MCTSAgent(hex_game, actor=actor, epsilon=epsilon, sigma=sigma, rollouts=rollouts, exploration=exploration)
 
         print(f"GAME {ga}, epsilon = {epsilon}")
         #hex_game.print_board()
@@ -44,15 +44,15 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sav
 
 
 if __name__ == "__main__":
-    play(size=5,
+    play(size=4,
          num_games=1000,
-         batch_size=256,
-         epochs=1,
-         epsilon=1.5,
+         batch_size=128,
+         epochs=10,
+         epsilon=0.5,
          sigma=2,
-         epsilon_decay=0.999,
-         save_interval=20,
-         time_budget=.1,
+         epsilon_decay=1,
+         save_interval=100,
+         rollouts=200,
          exploration=1,
          embedding_size=3,
          buffer_size=1024)

@@ -1,39 +1,57 @@
 import random
 
+import tensorflow as tf
 import numpy as np
 import keras
 from keras import Input, Model
-from keras.layers import Dense, Embedding, Dropout, Flatten
+from keras.layers import Dense, Embedding, Dropout, Flatten, Multiply
 from keras.models import load_model
 from keras.optimizers import Adam
 
 
 
 class Anet2:
-    def __init__(self, input_dim=17, output_dim=16, hidden_dims=(126, 512, 128), dropout_rate=0.2, load_path=None):
+    def __init__(self, input_dim=17, output_dim=16, hidden_dims=(128, 256, 364), dropout_rate=0.1, load_path=None):
         self.load_path = load_path
         if self.load_path is not None:
             self.model = self.load_saved_model(load_path)
         else:
             input_tensor = Input(shape=(input_dim,))
-            x = Embedding(input_dim=3, output_dim=4, input_length=input_dim)(input_tensor)
 
-            for hidden_dim in hidden_dims:
-                x = Dense(hidden_dim, activation='relu')(x)
-                x = Dropout(dropout_rate)(x)
+            for i in range(len(hidden_dims)):
+                if i == 0:
+                     x = Dense(hidden_dims[i], activation='relu', kernel_initializer='random_uniform', bias_initializer='zeros')(
+                    input_tensor)
+                else:
+                    x = Dense(hidden_dims[i], activation='relu', kernel_initializer='random_uniform', bias_initializer='zeros')(
+                    x)
+                x = Dropout(rate=dropout_rate)(x)
 
             x = Flatten()(x)
+            output = Dense(output_dim)(x)
 
-            output = Dense(output_dim, activation="softmax")(x)
-            self.model = Model(input_tensor, output)
+            # create a mask of available tiles
+            mask = tf.cast(tf.math.equal(input_tensor[:, 1:], 0), tf.float32)
+
+            # set the zero values in output to a very large negative number
+            large_negative = -1e9
+            output_masked = Multiply()([output, mask]) + (1 - mask) * large_negative
+
+            # apply softmax to the modified output
+            output_softmax = tf.keras.activations.softmax(output_masked)
+
+            self.model = tf.keras.models.Model(inputs=input_tensor, outputs=output_softmax)
             self.model.compile(optimizer=Adam(learning_rate=1e-3), loss="kl_divergence")
             self.model.summary()
 
+    def actor_branch(self, x):
+        pass
+
+    def critic_branch(self, x):
+        pass
+
     def predict(self, x):
-        mask = np.where(x == 0, 1, 0)[:, 1:]
-        output = self.model(x)
-        masked = np.multiply(output, mask)
-        return np.divide(masked, np.sum(masked))
+        return self.model(x)
 
     def fit(self, samples, epochs):
         x = np.array([sample[0] for sample in samples])
@@ -43,6 +61,9 @@ class Anet2:
     def best_move(self, x):
         predictions = self.predict(x)
         return np.argmax(predictions)
+
+    def eval_state(self, x):
+        pass
 
     def save_model(self, name):
         self.model.save(f"{name}.h5")

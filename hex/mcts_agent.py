@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import copy
 from queue import Queue
+from scipy.special import softmax
+
 from node import Node
 from player import PlayerInterface
 from utilities import normalize
@@ -13,17 +15,17 @@ from utilities import normalize
 
 class MCTSAgent(PlayerInterface):
 
-    def __init__(self, state, actor, epsilon=1, sigma=1.5, exploration=1, time_budget=5):
+    def __init__(self, state, actor, epsilon=1, sigma=1.5, exploration=1, rollouts=500):
         self.rootstate = state
         self.root = Node()
         self.exploration = exploration
-        self.time_budget = time_budget
+        self.rollouts = rollouts
         self.actor = actor
         self.epsilon = epsilon
         self.sigma = sigma
 
     def get_move(self):
-        self.search(self.time_budget)
+        self.search()
         move, visit_distribution = self.best_move()
 
         return move, visit_distribution, self.root.Q
@@ -39,7 +41,6 @@ class MCTSAgent(PlayerInterface):
             move = child.move
             visits[move] = child.N
         visit_distribution = normalize(visits)
-
         #self.plot_dist(range(size*size), visits)
 
         # choose the move of the most simulated node breaking ties randomly
@@ -65,23 +66,14 @@ class MCTSAgent(PlayerInterface):
         D = normalize(visits)
         return self.rootstate.board, D
 
-    def search(self, time_budget):
+    def search(self):
         self.root = Node()
 
-        startTime = time.perf_counter()
-        num_rollouts = 0
-        while time.perf_counter() - startTime < time_budget:
+        for _ in range(self.rollouts):
             node, state = self.select_node()
             player = state.current_player
             outcome = self.roll_out(state)
             self.backup(node, player, outcome)
-            num_rollouts += 1
-
-        """
-        stderr.write("Ran " + str(num_rollouts) + " rollouts in " + \
-                     str(time.perf_counter() - startTime) + " sec\n")
-        stderr.write("Node count: " + str(self.tree_size()) + "\n")
-        """
 
     def select_node(self):
         """
