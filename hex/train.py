@@ -23,35 +23,35 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sav
         player1 = MCTSAgent(hex_game, actor=actor, epsilon=epsilon, sigma=sigma, time_budget=time_budget, exploration=exploration)
 
         print(f"GAME {ga}, epsilon = {epsilon}")
-        #hex_game.print_board()
         while hex_game.winner == 0:
-            move, visit_dist, q = player1.get_move()
+            move, visit_dist, q = player1.get_move(True if (ga % save_interval == 0 or ga == 3) else False)
             state = np.append(hex_game.current_player, hex_game.clone_board())
 
             hex_game.place_piece(move)
             replayBuffer.push((state, visit_dist, q))
-            #hex_game.print_board()
-
+            if ga % save_interval == 0 or ga == 3:
+                hex_game.print_board()
         print(f'Player {hex_game.winner} wins!')
 
         samples = replayBuffer.sample(batch_size)
         actor.fit(samples, epochs=epochs)
+
         epsilon *= epsilon_decay
         sigma *= epsilon_decay
 
         if ga % save_interval == 0 or ga == 3:
             actor.save_model(f"{size}X{size}/game{ga}")
-
+    actor.save_model(f"{size}X{size}/game{ga}")
 
 if __name__ == "__main__":
-    play(size=5,
+    play(size=6,
          num_games=1000,
          batch_size=256,
          epochs=1,
-         epsilon=1.5,
+         epsilon=10,
          sigma=2,
-         epsilon_decay=0.999,
-         save_interval=20,
+         epsilon_decay=0.99,
+         save_interval=30,
          time_budget=.1,
          exploration=1,
          embedding_size=3,

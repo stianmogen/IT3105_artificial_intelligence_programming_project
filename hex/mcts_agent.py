@@ -22,13 +22,13 @@ class MCTSAgent(PlayerInterface):
         self.epsilon = epsilon
         self.sigma = sigma
 
-    def get_move(self):
+    def get_move(self, plot=False):
         self.search(self.time_budget)
-        move, visit_distribution = self.best_move()
+        move, visit_distribution = self.best_move(plot)
 
         return move, visit_distribution, self.root.Q
 
-    def best_move(self):
+    def best_move(self, plot=False):
         if self.rootstate.winner != 0:
             raise Exception("The board already has a winner")
 
@@ -39,8 +39,8 @@ class MCTSAgent(PlayerInterface):
             move = child.move
             visits[move] = child.N
         visit_distribution = normalize(visits)
-
-        #self.plot_dist(range(size*size), visits)
+        if plot:
+            self.plot_dist(range(size*size), visits)
 
         # choose the move of the most simulated node breaking ties randomly
         max_value = max(visits)
@@ -146,16 +146,6 @@ class MCTSAgent(PlayerInterface):
                 input = np.expand_dims(np.append(state.current_player, state.board), axis=0)
                 move = self.actor.best_move(input)
             state.place_piece(move)
-        return state.winner
-
-    def roll_out2(self, state):
-        moves = state.empty_spaces
-        if random.random() > self.epsilon:
-            input = np.expand_dims(np.append(state.current_player, state.board), axis=0)
-            move = self.actor.best_move(input)
-        while state.winner == 0:
-            move = random.choice(tuple(moves))
-        state.place_piece(move)
         return state.winner
 
     def backup(self, node, player, outcome):
