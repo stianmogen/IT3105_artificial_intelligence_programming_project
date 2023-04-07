@@ -1,5 +1,5 @@
 from hex.game_state import HexGameState
-from hex.mcts_agent import Node
+from agents.mcts_agent import Node
 from nn.neural_net import NeuralNet
 
 

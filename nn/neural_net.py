@@ -1,13 +1,9 @@
-import math
-import random
 import torch
-import torch.nn as nn
 import torch.optim as optim
-from collections import namedtuple, deque
 
 from hex.game_state import HexGameState
 from nn.qnet import DQN
-from nn.replay_buffer import ReplayBuffer
+from replay_buffer import ReplayBuffer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

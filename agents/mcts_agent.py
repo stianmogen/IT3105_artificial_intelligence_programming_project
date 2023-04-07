@@ -1,21 +1,17 @@
+import copy
 import random
-import time
-from sys import stderr
 
 import matplotlib.pyplot as plt
 import numpy as np
-import copy
-from queue import Queue
-from scipy.special import softmax
 
 from node import Node
-from player import PlayerInterface
+from hex.player import PlayerInterface
 from utilities import normalize
 
 
 class MCTSAgent(PlayerInterface):
 
-    def __init__(self, state, actor, epsilon=1, sigma=1.5, exploration=1, rollouts=500):
+    def __init__(self, state, actor, epsilon, sigma, exploration, rollouts=500):
         self.rootstate = state
         self.root = Node()
         self.exploration = exploration
@@ -25,12 +21,14 @@ class MCTSAgent(PlayerInterface):
         self.sigma = sigma
 
     def get_move(self, plot=False):
+        # TODO: move plot logic to simulator / ttop class. Just return distribution
         self.search()
         move, visit_distribution = self.best_move(plot)
-
+        #print(self.root.Q)
         return move, visit_distribution, self.root.Q
 
     def best_move(self, plot=False):
+        # TODO: move plot logic to simulator / ttop class. Just return distribution
         if self.rootstate.winner != 0:
             raise Exception("The board already has a winner")
 
@@ -72,57 +70,37 @@ class MCTSAgent(PlayerInterface):
 
         for _ in range(self.rollouts):
             node, state = self.select_node()
-            player = state.current_player
-            outcome = self.roll_out(state)
-            self.backup(node, player, outcome)
+            if random.random() > self.sigma:
+                model_input = np.expand_dims(np.append(state.current_player, state.board), axis=0)
+                reward = self.actor.predict(model_input)
+            else:
+                turn = state.current_player
+                winner = self.roll_out(state)
+                reward = 0 if turn == winner else 1
+            self.backup(node, reward)
 
     def select_node(self):
-        """
-        Select a node in the tree to preform a single simulation from.
-        """
         node = self.root
         state = copy.deepcopy(self.rootstate)
-        # stop if we find reach a leaf node
 
         while len(node.children) != 0:
-            # once upon a time this worked, so we will try again with this
-            max_value = max(node.children, key=lambda n: n.value(self.exploration)).value(self.exploration)
+            max_value = max(node.children, key=lambda edge: edge.value(self.exploration)).value(self.exploration)
             max_nodes = [n for n in node.children if n.value(self.exploration) == max_value]
             node = random.choice(max_nodes)
-            # decend to the maximum value node, break ties at random
-            """
-            if state.current_player == 1:
-                max_value = max(node.children, key=lambda n: n.value(self.exploration, True)).value(self.exploration, True)
-                nodes = [n for n in node.children if n.value(self.exploration, True) == max_value]
-            else:
-                min_value = min(node.children, key=lambda n: n.value(self.exploration, False)).value(self.exploration, False)
-                nodes = [n for n in node.children if n.value(self.exploration, False) == min_value]
-
-            node = random.choice(nodes)
-            """
-            move = node.move
-            state.place_piece(move)
-
-            # if some child node has not been explored select it before expanding
-            # other children
+            state.place_piece(node.move)
             if node.N == 0:
                 return node, state
 
         if self.expand(node, state):
             node = random.choice(node.children)
-            move = node.move
-            state.place_piece(move)
+            state.place_piece(node.move)
+
         return node, state
 
     def expand(self, parent, state):
-        """
-        Generate the children of the passed "parent" node based on the available
-        moves in the passed HexGameState and add them to the tree.
-        """
         children = []
         if state.winner != 0:
-            # game is over at this node so nothing to expand
-            return False
+            return False  # game is over at this node so nothing to expand
 
         for move in state.empty_spaces:
             children.append(Node(move, parent))
@@ -131,42 +109,18 @@ class MCTSAgent(PlayerInterface):
         return True
 
     def roll_out(self, state):
-        moves = state.empty_spaces
         while state.winner == 0:
             if random.random() < self.epsilon:
-                move = random.choice(tuple(moves))
+                move = random.choice(tuple(state.empty_spaces))
             else:
                 input = np.expand_dims(np.append(state.current_player, state.board), axis=0)
                 move = self.actor.best_move(input)
             state.place_piece(move)
         return state.winner
 
-    def backup(self, node, player, outcome):
-        """
-        Update the node statistics on the path from the passed node to root to reflect
-        the outcome of a randomly simulated playout.
-        """
-        # note that reward is calculated for player who just played
-        # at the node and not the next player to play
-
-        reward = -1 if outcome == player else 1
-
+    def backup(self, node, reward):
         while node is not None:
             node.N += 1
-            node.Q += (reward - node.Q) / (1 + node.N)
-            reward = -reward
+            node.score += reward
             node = node.parent
-
-    def tree_size(self):
-        """
-        Count nodes in tree by BFS.
-        """
-        Q = Queue()
-        count = 0
-        Q.put(self.root)
-        while not Q.empty():
-            node = Q.get()
-            count += 1
-            for child in node.children:
-                Q.put(child)
-        return count
+            reward = 1 - reward

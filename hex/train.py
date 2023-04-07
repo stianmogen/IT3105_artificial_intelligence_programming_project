@@ -4,14 +4,14 @@ import numpy as np
 import torch
 
 from game_state import HexGameState
-from mcts_agent import MCTSAgent
+from agents.mcts_agent import MCTSAgent
 from nn.anet import Anet2
-from nn.replay_buffer import ReplayBuffer
+from replay_buffer import ReplayBuffer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, save_interval, rollouts, exploration, embedding_size, buffer_size):
+def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, save_interval, rollouts, exploration, buffer_size):
     if not os.path.exists(f"{size}X{size}"):
         os.makedirs(f"{size}X{size}")
 
@@ -22,17 +22,17 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sav
         hex_game = HexGameState(size)
         player1 = MCTSAgent(hex_game, actor=actor, epsilon=epsilon, sigma=sigma, rollouts=rollouts, exploration=exploration)
 
-        print(f"GAME {ga}, epsilon = {epsilon}")
+        print(f"GAME {ga}, epsilon = {epsilon}, sigma = {sigma}")
         while hex_game.winner == 0:
             move, visit_dist, q = player1.get_move(True if (ga % save_interval == 0 or ga == 3) else False)
             state = np.append(hex_game.current_player, hex_game.clone_board())
+            replayBuffer.push((state, visit_dist, q))
 
             hex_game.place_piece(move)
-            replayBuffer.push((state, visit_dist, q))
             if ga % save_interval == 0 or ga == 3:
                 hex_game.print_board()
         print(f'Player {hex_game.winner} wins!')
-
+        print(replayBuffer.__len__())
         samples = replayBuffer.sample(batch_size)
         actor.fit(samples, epochs=epochs)
 
@@ -43,16 +43,16 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sav
             actor.save_model(f"{size}X{size}/game{ga}")
     actor.save_model(f"{size}X{size}/game{ga}")
 
+
 if __name__ == "__main__":
-    play(size=6,
+    play(size=4,
          num_games=1000,
-         batch_size=256,
+         batch_size=128,
          epochs=1,
-         epsilon=10,
-         sigma=2,
-         epsilon_decay=0.99,
+         epsilon=1.1,
+         sigma=1.1,
+         epsilon_decay=0.995,
          save_interval=30,
-         rollouts=200,
+         rollouts=400,
          exploration=1,
-         embedding_size=3,
-         buffer_size=1024)
+         buffer_size=512)

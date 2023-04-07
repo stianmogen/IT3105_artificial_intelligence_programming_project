@@ -4,7 +4,7 @@ import tensorflow as tf
 import numpy as np
 import keras
 from keras import Input, Model
-from keras.layers import Dense, Embedding, Dropout, Flatten, Multiply
+from keras.layers import Dense, Embedding, Dropout, Flatten, Multiply, Activation
 from keras.models import load_model
 from keras.optimizers import Adam
 
@@ -18,52 +18,67 @@ class Anet2:
         else:
             input_tensor = Input(shape=(input_dim,))
 
-            for i in range(len(hidden_dims)):
-                if i == 0:
-                     x = Dense(hidden_dims[i], activation='relu', kernel_initializer='random_uniform', bias_initializer='zeros')(
-                    input_tensor)
-                else:
-                    x = Dense(hidden_dims[i], activation='relu', kernel_initializer='random_uniform', bias_initializer='zeros')(
-                    x)
-                x = Dropout(rate=dropout_rate)(x)
+            actor = self.create_actor_branch(input_tensor, output_dim)
+            critic = self.create_critic_branch(input_tensor)
 
-            x = Flatten()(x)
-            output = Dense(output_dim)(x)
+            model = keras.Model(
+                inputs=input_tensor, outputs=[actor, critic], name="anet"
+            )
+            losses = {
+                "actor_output": "kl_divergence",
+                "critic_output": "mse",
+            }
+            loss_weights = {"actor_output": 1.0, "critic_output": 1.0}
+            model.compile(
+                optimizer=Adam(learning_rate=1e-2), loss=losses, loss_weights=loss_weights
+            )
+            model.summary()
+            self.model = model
+            
 
-            # create a mask of available tiles
-            mask = tf.cast(tf.math.equal(input_tensor[:, 1:], 0), tf.float32)
+    def create_actor_branch(self, x, ouput_dim):
+        # create a mask of available tiles
+        mask = tf.cast(tf.math.equal(x[:, 1:], 0), tf.float32)
 
-            # set the zero values in output to a very large negative number
-            large_negative = -1e9
-            output_masked = Multiply()([output, mask]) + (1 - mask) * large_negative
+        hidden_dims = [64, 128, 256, 512, 512]
+        for hidden_dim in hidden_dims:
+            x = Dense(hidden_dim, activation='relu', kernel_initializer='random_uniform', bias_initializer='zeros')(x)
 
-            # apply softmax to the modified output
-            output_softmax = tf.keras.activations.softmax(output_masked)
+        output = Dense(ouput_dim)(x)
 
-            self.model = tf.keras.models.Model(inputs=input_tensor, outputs=output_softmax)
-            self.model.compile(optimizer=Adam(learning_rate=1e-3), loss="kl_divergence")
-            self.model.summary()
+        # set the zero values in output to a very large negative number
+        large_negative = -1e9
+        output_masked = Multiply()([output, mask]) + (1 - mask) * large_negative
 
-    def actor_branch(self, x):
-        pass
+        # apply softmax to the modified output
+        output_softmax = Activation(activation="softmax", name="actor_output")(output_masked)
+        return output_softmax
 
-    def critic_branch(self, x):
-        pass
+    def create_critic_branch(self, x):
+        hidden_dims = [64, 128, 256, 512, 512]
+        for hidden_dim in hidden_dims:
+                x = Dense(hidden_dim, activation='relu', kernel_initializer='random_uniform', bias_initializer='zeros')(x)
+        x = Dense(1)(x)
+        x = Activation(activation="sigmoid", name="critic_output")(x)
+        return x
 
     def predict(self, x):
-        return self.model(x)
+        _, critic = self.model(x)
+        return critic.numpy()[0][0]
 
     def fit(self, samples, epochs):
         x = np.array([sample[0] for sample in samples])
-        y = np.array([sample[1] for sample in samples], dtype=np.float32)
-        self.model.fit(x, y, verbose=1, epochs=epochs)
+        actor_target = np.array([sample[1] for sample in samples], dtype=np.float32)
+        critic_target = np.array([sample[2] for sample in samples], dtype=np.float32)
+        y = {"actor_output": actor_target,
+             "critic_output": critic_target}
+
+        self.model.fit(x, y, verbose=1, batch_size=32, epochs=epochs)
+
 
     def best_move(self, x):
-        predictions = self.predict(x)
-        return np.argmax(predictions)
-
-    def eval_state(self, x):
-        pass
+        distribution, _ = self.model(x)
+        return np.argmax(distribution)
 
     def save_model(self, name):
         self.model.save(f"{name}.h5")

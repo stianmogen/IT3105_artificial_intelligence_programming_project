@@ -77,6 +77,7 @@ class HexGameState:
         self.current_player = 1
         self.board = np.zeros(self.size * self.size, dtype=int)
         self.empty_spaces = set(range(self.size * self.size))
+        self.last_move = None
         self.left_right = DisjointSet(self.size * self.size + 2)
         self.top_bottom = DisjointSet(self.size * self.size + 2)
 
