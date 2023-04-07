@@ -3,11 +3,10 @@ import random
 
 
 # https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
-import torch
 
 
 class ReplayBuffer:
-    def __init__(self, capacity=2**9):
+    def __init__(self, capacity=2**8):
         # memory is a dq with capacity defined at instantiation else 256
         self.memory = deque([], maxlen=capacity)
         self.capacity = capacity
@@ -20,7 +19,7 @@ class ReplayBuffer:
 
     def sample(self, batch_size):
         if batch_size > self.__len__():
-            batch_size = self.__len__()
+            return self.memory
 
         # sample method might
         res = random.sample(self.memory, batch_size)
