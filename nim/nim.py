@@ -1,41 +1,27 @@
-from manager import MiniMaxAgent
+from manager import MiniMaxAgent, MCTSAgent
+from game_state import NimGameState
 
 
 def nim_game(piles):
     print("Current piles: {}".format(piles))
 
-    agent1 = MiniMaxAgent()
-    while any(piles):
-        print("Player 1 turn")
+    state = NimGameState(piles)
 
-        # CHOICE 1
-        pile = int(input("Choose pile (1-3): "))
-        while pile < 1 or pile > 3 or piles[pile-1] == 0:
-            # CHOICE 1
-            pile = int(input("Invalid pile, choose pile (1-3): "))
-        # CHOICE 1
-        sticks_taken = int(input("Choose sticks (1-{}): ".format(min(piles[pile-1], 4))))
-        while sticks_taken < 1 or sticks_taken > piles[pile-1]:
-            sticks_taken = int(input("Invalid choice, choose sticks (1-{}): ".format(min(piles[pile-1]))))
-        piles[pile-1] -= sticks_taken
-        print("Current piles: {}".format(piles))
-        if not any(piles):
-            print("Agent 2 wins!")
-            return
+    minimax = MiniMaxAgent(state=state)
+    mcts = MCTSAgent(state=state, c=1, rollouts=20000)
 
-        # CHOICE 1
-        score, new_state = agent1.best_move(piles)
-        print("AGENT CHOSE: ", new_state)
+    agents = [('minimax', minimax), ('mcts', mcts)]
+    while state.winner == 0:
+        name, agent = agents[state.current_player-1]
+        move = agent.get_move()
+        print(f"{name} CHOSE: ", move)
+        state.move(move)
+        print(f"Current piles: {piles}")
 
-        piles = new_state
-
-        print("Current piles: {}".format(piles))
-        if not any(piles):
-            print("Player 1 wins!")
-            return
+    print(f"Winner = agent{agents[state.winner-1][0]}")
 
 
-nim_game([1, 3, 5, 7])
+nim_game([1, 3, 5, 2, 1])
 
 # 1
 # 1 2
