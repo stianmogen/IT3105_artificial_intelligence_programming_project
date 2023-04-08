@@ -19,16 +19,7 @@ def run_series(actor1, actor2, board_size, num_games, epsilon, rollouts, sigma, 
     actors = [actor1, actor2]
     w = random.randint(0, 1)  # Starting actor index either 0 or 1
     b = 1 - w  # Second actor index is the one not starting
-    x = np.array([[2,
-                  1, 2, 0, 0, 0, 0, 0,
-                  1, 2, 0, 0, 0, 0, 0,
-                  1, 2, 0, 0, 0, 0, 0,
-                  1, 2, 0, 0, 0, 0, 0,
-                  1, 2, 0, 0, 0, 0, 0,
-                  1, 2, 0, 0, 0, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0]])
-    print(f"Model {actor1.name} prediction {actor1.model.model(x)}")
-    print(f"Model {actor2.name} prediction {actor2.model.model(x)}")
+
     # Actor1 wins - actor2 wins
     statistics = [0, 0]
 
@@ -66,8 +57,8 @@ def run_tournament():
         f = os.path.join(actors_dir, filename)
         # checking if it is a file
         if os.path.isfile(f):
-            if filename == "game30.h5" or filename == "game90.h5":
-                model = Anet2(load_path=f)
+            if filename == "game120.h5" or filename == "game3.h5":
+                model = Anet2(board_size=size, load_path=f)
                 actors.append(Actor(filename, model))
 
     for i in range(len(actors)):

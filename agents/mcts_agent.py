@@ -71,8 +71,7 @@ class MCTSAgent(PlayerInterface):
         for _ in range(self.rollouts):
             node, state = self.select_node()
             if random.random() > self.sigma:
-                model_input = np.expand_dims(np.append(state.current_player, state.board), axis=0)
-                reward = self.actor.predict(model_input)
+                reward = self.actor.predict(state.board, state.current_player)
             else:
                 turn = state.current_player
                 winner = self.roll_out(state)
@@ -113,8 +112,7 @@ class MCTSAgent(PlayerInterface):
             if random.random() < self.epsilon:
                 move = random.choice(tuple(state.empty_spaces))
             else:
-                input = np.expand_dims(np.append(state.current_player, state.board), axis=0)
-                move = self.actor.best_move(input)
+                move = self.actor.best_move(state.board, state.current_player)
             state.place_piece(move)
         return state.winner
 
