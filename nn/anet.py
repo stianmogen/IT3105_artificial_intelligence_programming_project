@@ -16,12 +16,11 @@ class Anet2:
 
             x = Conv2D(filters=32, kernel_size=(3, 3), padding='same', activation='relu')(model_input)
             x = Conv2D(filters=64, kernel_size=(2, 2), padding='same', activation='relu')(x)
-            #x = MaxPooling2D(pool_size=(2, 2))(x)
-            x = Conv2D(filters=64, kernel_size=(1, 1), padding='same', activation='relu')(x)
+            x = Conv2D(filters=64, kernel_size=(2, 2), padding='same', activation='relu')(x)
             x = Flatten()(x)
 
-            x = Dense(32, activation='relu')(x)
-            x = Dense(64, activation='relu')(x)
+            x = Dense(256, activation='relu')(x)
+            x = Dense(128, activation='relu')(x)
 
             actor = Dense(self.board_size * self.board_size, activation='softmax', name='actor_output')(x)
             critic = Dense(1, activation='sigmoid', name='critic_output')(x)
@@ -32,12 +31,13 @@ class Anet2:
                 'critic_output': 'mse',
             }
             loss_weights = {'actor_output': 1.0, 'critic_output': 1.0}
-            model.compile(optimizer=Adam(learning_rate=2e-3), loss=losses, loss_weights=loss_weights)
+            model.compile(optimizer=Adam(learning_rate=1e-3), loss=losses, loss_weights=loss_weights)
             model.summary()
             self.model = model
 
     def predict(self, board, player):
-        x = {"board_input": np.array([board], dtype=np.uint8), "player_input": np.array([player == 2], dtype=np.uint8)}
+        x = self.one_hot_encode(board, player)
+        x = np.expand_dims(x, axis=0)
         _, critic = self.model(x)
         return critic.numpy()[0][0]
 
@@ -45,14 +45,15 @@ class Anet2:
         x = np.array([self.one_hot_encode(sample[0], 1) for sample in samples])
         actor_target = np.array([sample[1] for sample in samples], dtype=np.float32)
         critic_target = np.array([sample[2] for sample in samples], dtype=np.float32)
-        y = {"actor_output": actor_target, "critic_output": critic_target}
 
-        self.model.fit(x, y, verbose=1, batch_size=10, shuffle=True, epochs=epochs)
+        y = {"actor_output": actor_target, "critic_output": critic_target}
+        self.model.fit(x, y, verbose=1, batch_size=32, shuffle=True, epochs=epochs)
 
     def best_move(self, board, player):
         mask = np.where(board == 0, 1, 0)
         x = self.one_hot_encode(board, player)
         x = np.expand_dims(x, axis=0)
+
         distribution, _ = self.model(x)
         distribution = distribution.numpy()
 
