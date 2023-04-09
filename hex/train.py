@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import torch
 
 from agents.mcts_agent import MCTSAgent
@@ -24,7 +25,13 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sig
         print(f"GAME {ga}, epsilon = {epsilon}, sigma = {sigma}")
         while hex_game.winner == 0:
             move, visit_dist, q = player1.get_move(True if (ga % save_interval == 0 or ga == 3) else False)
-            replayBuffer.push((hex_game.clone_board(), hex_game.current_player, visit_dist, q))
+            board = hex_game.clone_board()
+            if hex_game.current_player == 2:
+                board = np.array([[1 if tile == 2 else (2 if tile == 1 else 0)]for tile in board])
+                board = board.reshape((size, size)).T.flatten()
+                visit_dist = visit_dist.reshape((size, size)).T.flatten()
+
+            replayBuffer.push((board, visit_dist, q))
 
             hex_game.place_piece(move)
             if ga % save_interval == 0 or ga == 3:
@@ -44,13 +51,13 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sig
 if __name__ == "__main__":
     play(size=7,
          num_games=1000,
-         batch_size=256,
-         epochs=1,
-         epsilon=1.2,
+         batch_size=64,
+         epochs=5,
+         epsilon=1.00,
          sigma=2,
          epsilon_decay=0.998,
          sigma_decay=0.999,
          save_interval=30,
-         rollouts=500,
+         rollouts=800,
          exploration=1,
-         buffer_size=2048)
+         buffer_size=512)

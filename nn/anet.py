@@ -1,11 +1,6 @@
-import random
-
-import tensorflow as tf
 import numpy as np
-import keras
 from keras import Input, Model
-from keras.layers import Dense, Embedding, Dropout, Flatten, Multiply, Activation, Conv2D, concatenate, Reshape, \
-    RepeatVector, MaxPooling2D, Lambda
+from keras.layers import Dense, Flatten, Conv2D
 from keras.models import load_model
 from keras.optimizers import Adam
 
@@ -13,43 +8,31 @@ from keras.optimizers import Adam
 class Anet2:
     def __init__(self, board_size, load_path=None):
         self.load_path = load_path
+        self.board_size = board_size
         if self.load_path is not None:
             self.model = self.load_saved_model(load_path)
         else:
-            board_input = Input(shape=(board_size * board_size), name='board_input', dtype=np.uint8)
-            board_oh = Lambda(lambda x: tf.one_hot(x, depth=3))(board_input)
-            player_input = Input(shape=(1,), name='player_input')
+            model_input = Input(shape=(self.board_size, self.board_size, 2))
 
-            reshaped_board_input = Reshape((board_size, board_size, 3))(board_oh)
-            repeated_player_input = RepeatVector(board_size * board_size)(player_input)
-            repeated_player_input = Reshape((board_size, board_size, 1))(repeated_player_input)
-
-            x = concatenate([reshaped_board_input, repeated_player_input])
-
-            x = Reshape((board_size, board_size, 3 + 1))(x)
-
-
-            # Add convolutional layers here
-            x = Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation='relu')(x)
-            x = MaxPooling2D(pool_size=(2, 2))(x)
-            x = Conv2D(filters=128, kernel_size=(3, 3), padding='same', activation='relu')(x)
-            x = MaxPooling2D(pool_size=(2, 2))(x)
+            x = Conv2D(filters=32, kernel_size=(3, 3), padding='same', activation='relu')(model_input)
+            x = Conv2D(filters=64, kernel_size=(2, 2), padding='same', activation='relu')(x)
+            #x = MaxPooling2D(pool_size=(2, 2))(x)
+            x = Conv2D(filters=64, kernel_size=(1, 1), padding='same', activation='relu')(x)
             x = Flatten()(x)
 
-            # Add dense layers here
-            x = Dense(256, activation='relu')(x)
+            x = Dense(32, activation='relu')(x)
             x = Dense(64, activation='relu')(x)
 
-            actor = Dense(board_size * board_size, activation='softmax', name='actor_output')(x)
+            actor = Dense(self.board_size * self.board_size, activation='softmax', name='actor_output')(x)
             critic = Dense(1, activation='sigmoid', name='critic_output')(x)
 
-            model = Model(inputs=[board_input, player_input], outputs=[actor, critic], name='anet')
+            model = Model(inputs=model_input, outputs=[actor, critic], name='anet')
             losses = {
-                'actor_output': 'kl_divergence',
+                'actor_output': 'categorical_crossentropy',
                 'critic_output': 'mse',
             }
             loss_weights = {'actor_output': 1.0, 'critic_output': 1.0}
-            model.compile(optimizer=Adam(learning_rate=1e-3), loss=losses, loss_weights=loss_weights)
+            model.compile(optimizer=Adam(learning_rate=2e-3), loss=losses, loss_weights=loss_weights)
             model.summary()
             self.model = model
 
@@ -59,24 +42,41 @@ class Anet2:
         return critic.numpy()[0][0]
 
     def fit(self, samples, epochs):
-        boards = np.array([sample[0] for sample in samples], dtype=np.uint8)
-        players = np.array([sample[1] == 2 for sample in samples], dtype=np.uint8)
-        x = {"board_input": boards, "player_input": players}
-
-        actor_target = np.array([sample[2] for sample in samples], dtype=np.float32)
-        critic_target = np.array([sample[3] for sample in samples], dtype=np.float32)
+        x = np.array([self.one_hot_encode(sample[0], 1) for sample in samples])
+        actor_target = np.array([sample[1] for sample in samples], dtype=np.float32)
+        critic_target = np.array([sample[2] for sample in samples], dtype=np.float32)
         y = {"actor_output": actor_target, "critic_output": critic_target}
 
-        self.model.fit(x, y, verbose=1, batch_size=64, shuffle=True, epochs=epochs)
+        self.model.fit(x, y, verbose=1, batch_size=10, shuffle=True, epochs=epochs)
 
     def best_move(self, board, player):
         mask = np.where(board == 0, 1, 0)
-        x = {"board_input": np.array([board], dtype=np.uint8), "player_input": np.array([player], np.uint8)}
+        x = self.one_hot_encode(board, player)
+        x = np.expand_dims(x, axis=0)
         distribution, _ = self.model(x)
+        distribution = distribution.numpy()
+
+        if player == 2:
+            distribution = distribution.reshape((self.board_size, self.board_size)).T.flatten()
+
         distribution = np.multiply(mask, distribution)
         distribution = np.divide(distribution, np.sum(distribution))
 
         return np.argmax(distribution)
+
+    def one_hot_encode(self, board, player):
+        p1_board = np.where(board == 1, 1, 0).reshape(self.board_size, self.board_size)
+        p2_board = np.where(board == 2, 1, 0).reshape(self.board_size, self.board_size)
+
+        ohe = np.zeros(shape=(self.board_size, self.board_size, 2))
+        for i in range(self.board_size):
+            for j in range(self.board_size):
+                if player == 1:
+                    ohe[i, j] = [p1_board[i, j], p2_board[i, j]]
+                else:
+                    ohe[i, j] = [p2_board.T[i, j], p1_board.T[i, j]]
+
+        return ohe
 
     def save_model(self, name):
         self.model.save(f"{name}.h5")
