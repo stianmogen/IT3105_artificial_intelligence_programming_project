@@ -84,9 +84,13 @@ class HexGameState:
     def clone_board(self):
         return copy.deepcopy(self.board)
 
-    def print_board(self):
+    def print_board(self, board_in=None):
         rows = self.size
         cols = self.size
+        if board_in is not None:
+            board = board_in
+        else:
+            board = self.board
         indent = 0
 
         headings = " " * 5 + (" " * 3).join(self.column_names[:cols])
@@ -99,7 +103,7 @@ class HexGameState:
         for r in range(rows):
             row_mid = " " * indent
             row_mid += " {} | ".format(r + 1)
-            row_mid += " | ".join(map(color_mapping, self.board[r*self.size:(r+1)*self.size]))
+            row_mid += " | ".join(map(color_mapping, board[r*self.size:(r+1)*self.size]))
             row_mid += " | {} ".format(r + 1)
             print(row_mid)
             row_bottom = " " * indent
