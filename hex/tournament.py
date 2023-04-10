@@ -17,6 +17,14 @@ class Actor:
 
 def run_series(actor1, actor2, board_size, num_games, epsilon, rollouts, sigma, exploration):
     actors = [actor1, actor2]
+    board = HexGameState(board_size)
+
+    #Pure mcts
+    #agent1 = MCTSAgent(board, actor=actor1.model, epsilon=1, sigma=1, rollouts=rollouts, exploration=exploration)
+
+    agent1 = MCTSAgent(board, actor=actor1.model, epsilon=epsilon, sigma=sigma, rollouts=rollouts, exploration=exploration)
+    agent2 = MCTSAgent(board, actor=actor2.model, epsilon=epsilon, sigma=sigma, rollouts=rollouts, exploration=exploration)
+    agents = [agent1, agent2]
     w = random.randint(0, 1)  # Starting actor index either 0 or 1
     b = 1 - w  # Second actor index is the one not starting
 
@@ -24,9 +32,8 @@ def run_series(actor1, actor2, board_size, num_games, epsilon, rollouts, sigma, 
     statistics = [0, 0]
 
     for i in range(num_games):
-        board = HexGameState(board_size)
-        player1 = MCTSAgent(board, actor=actors[w].model, epsilon=epsilon, sigma=sigma, rollouts=rollouts, exploration=exploration)
-        player2 = MCTSAgent(board, actor=actors[b].model, epsilon=epsilon, sigma=sigma, rollouts=rollouts, exploration=exploration)
+        player1 = agents[w]
+        player2 = agents[b]
         while not board.winner:
             move, _, _ = player1.get_move()
             board.place_piece(move)
@@ -46,6 +53,8 @@ def run_series(actor1, actor2, board_size, num_games, epsilon, rollouts, sigma, 
         w = (w + 1) % 2  # Swapping actor starting
         b = 1 - w
 
+        board.reset_board()
+
     return statistics
 
 
@@ -64,7 +73,7 @@ def run_tournament():
     for i in range(len(actors)):
         for j in range(i+1, len(actors)):
             print(f"{actors[i].name} vs {actors[j].name}")
-            actor1_wins, actor2_wins = run_series(actors[i], actors[j], board_size=size, num_games=20, epsilon=0.2, sigma=1, rollouts=500,
+            actor1_wins, actor2_wins = run_series(actors[i], actors[j], board_size=size, num_games=20, epsilon=0.5, sigma=0.5, rollouts=500,
                                     exploration=1)
             print(f"{actors[i].name} victories: {actor1_wins}")
             print(f"{actors[j].name} victories: {actor2_wins}")

@@ -81,6 +81,12 @@ class HexGameState:
         self.left_right = DisjointSet(self.size * self.size + 2)
         self.top_bottom = DisjointSet(self.size * self.size + 2)
 
+        for i in range(self.size):
+            self.top_bottom.union(self.size * self.size, i)
+            self.top_bottom.union(self.size * self.size + 1, self.size * self.size - 1 - i)
+            self.left_right.union(self.size * self.size, i * self.size)
+            self.left_right.union(self.size * self.size + 1, i * self.size + self.size - 1)
+
     def clone_board(self):
         return copy.deepcopy(self.board)
 
