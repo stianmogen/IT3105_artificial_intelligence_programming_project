@@ -2,7 +2,8 @@ import numpy as np
 from keras import Input, Model
 from keras.layers import Dense, Flatten, Conv2D
 from keras.models import load_model
-from keras.optimizers import Adam
+#from keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam
 
 from hex.parameters import Parameters
 

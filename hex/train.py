@@ -1,7 +1,6 @@
 import os
 
 import numpy as np
-import torch
 
 from agents.mcts_agent import MCTSAgent
 from game_state import HexGameState
@@ -57,10 +56,34 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sig
 
         if ga % save_interval == 0 or ga == 3:
             actor.save_model(f"{size}X{size}/game{ga}")
-    actor.save_model(f"{size}X{size}/game{ga}")
+    actor.save_model(f"{size}X{size}/500rolls-game{ga}")
 
 
 if __name__ == "__main__":
+
+    import os
+    import tensorflow as tf
+    os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+
+    built = tf.test.is_built_with_cuda()
+    print("tf is built with CUDA? ", built)
+    sys_details = tf.sysconfig.get_build_info()
+    print(sys_details)
+
+    gpus = tf.config.list_physical_devices('GPU')
+
+    print("Num GPUs Available: ", len(gpus))
+    print(gpus)
+
+    if gpus:
+        # Restrict TensorFlow to only use the first GPU
+        try:
+            tf.config.set_visible_devices(gpus[0], 'GPU')
+            logical_gpus = tf.config.list_logical_devices('GPU')
+            print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPU")
+        except RuntimeError as e:
+            # Visible devices must be set before GPUs have been initialized
+            print(e)
     play(size=p.board_size,
          num_games=p.num_games,
          batch_size=p.batch_size,
