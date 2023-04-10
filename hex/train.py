@@ -10,6 +10,14 @@ from replay_buffer import ReplayBuffer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+def reinforce_winner(winner, visit_dist, move):
+    if winner:
+        for i in range(len(visit_dist)):
+            if i == move:
+                visit_dist[i] = 1
+            else:
+                visit_dist[i] = 0
+    return visit_dist
 
 def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sigma_decay, save_interval, rollouts, exploration, buffer_size):
     if not os.path.exists(f"{size}X{size}"):
@@ -27,19 +35,20 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sig
             move, visit_dist, q = player1.get_move(True if (ga % save_interval == 0 or ga == 3) else False)
             board = hex_game.clone_board()
             if hex_game.current_player == 2:
-                board = np.array([[1 if tile == 2 else (2 if tile == 1 else 0)]for tile in board])
+                board = np.array([[1 if tile == 2 else (2 if tile == 1 else 0)] for tile in board])
                 board = board.reshape((size, size)).T.flatten()
                 visit_dist = visit_dist.reshape((size, size)).T.flatten()
 
+            hex_game.place_piece(move)
+            visit_dist = reinforce_winner(hex_game.winner, visit_dist, move)
             replayBuffer.push((board, visit_dist, q))
 
-            hex_game.place_piece(move)
+
             if ga % save_interval == 0 or ga == 3:
                 hex_game.print_board()
         print(f'Player {hex_game.winner} wins!')
         samples = replayBuffer.sample(batch_size)
         actor.fit(samples, epochs=epochs)
-
         epsilon *= epsilon_decay
         sigma *= sigma_decay
 
@@ -49,8 +58,8 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sig
 
 
 if __name__ == "__main__":
-    play(size=5,
-         num_games=1000,
+    play(size=7,
+         num_games=1,
          batch_size=128,
          epochs=5,
          epsilon=1.,
@@ -58,6 +67,6 @@ if __name__ == "__main__":
          epsilon_decay=0.998,
          sigma_decay=0.999,
          save_interval=30,
-         rollouts=400,
+         rollouts=100,
          exploration=1,
          buffer_size=512)
