@@ -1,13 +1,14 @@
 import os
 import random
 
-import numpy as np
 from keras.models import load_model
 
+from hex.parameters import Parameters
 from nn.anet import Anet2
 from train import HexGameState
 from train import MCTSAgent
 
+p = Parameters()
 
 class Actor:
     def __init__(self, name, model):
@@ -37,18 +38,18 @@ def run_series(actor1, actor2, board_size, num_games, epsilon, rollouts, sigma, 
         while not board.winner:
             move, _, _ = player1.get_move()
             board.place_piece(move)
-            #board.print_board()
+            board.print_board() if p.visualize_board else None
             if not board.winner:
                 move, _, _ = player2.get_move()
                 board.place_piece(move)
-                #board.print_board()
+                board.print_board() if p.visualize_board else None
         #print("WINNER", board.winner)
         #print("W=", w, "B=", b)
-        #board.print_board()
+        board.print_board() if p.visualize_board else None
 
         winner = w if board.winner == 1 else b
         statistics[winner] += 1
-        print(f"Winner is {actors[winner].name}")
+        print(f"Winner is {actors[winner].name}") if p.print_winner else None
 
         w = (w + 1) % 2  # Swapping actor starting
         b = 1 - w
@@ -60,13 +61,13 @@ def run_series(actor1, actor2, board_size, num_games, epsilon, rollouts, sigma, 
 
 def run_tournament():
     actors = []
-    size = 5
+    size = p.board_size
     actors_dir = f"{size}X{size}"
     for filename in os.listdir(actors_dir):
         f = os.path.join(actors_dir, filename)
         # checking if it is a file
         if os.path.isfile(f):
-            if filename == "game30.h5" or filename == "game480.h5":
+            if filename in p.model_files:
                 model = Anet2(board_size=size, load_path=f)
                 actors.append(Actor(filename, model))
 

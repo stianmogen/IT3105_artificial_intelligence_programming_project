@@ -7,8 +7,14 @@ from agents.mcts_agent import MCTSAgent
 from game_state import HexGameState
 from nn.anet import Anet2
 from replay_buffer import ReplayBuffer
+from parameters import Parameters
+
+p = Parameters()
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
 
 def reinforce_winner(winner, visit_dist, move):
     if winner:
@@ -58,15 +64,15 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sig
 
 
 if __name__ == "__main__":
-    play(size=7,
-         num_games=1000,
-         batch_size=128,
-         epochs=5,
-         epsilon=1.,
-         sigma=1.,
-         epsilon_decay=0.998,
-         sigma_decay=0.999,
-         save_interval=33,
-         rollouts=200,
-         exploration=1,
-         buffer_size=512)
+    play(size=p.board_size,
+         num_games=p.num_games,
+         batch_size=p.batch_size,
+         epochs=p.epochs,
+         epsilon=p.epsilon,
+         sigma=p.sigma,
+         epsilon_decay=p.epsilon_decay,
+         sigma_decay=p.sigma_decay,
+         save_interval=p.save_interval,
+         rollouts=p.rollouts,
+         exploration=p.exploration,
+         buffer_size=p.buffer_size)

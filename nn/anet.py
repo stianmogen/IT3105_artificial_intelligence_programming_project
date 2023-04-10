@@ -4,6 +4,10 @@ from keras.layers import Dense, Flatten, Conv2D
 from keras.models import load_model
 from keras.optimizers import Adam
 
+from hex.parameters import Parameters
+
+p = Parameters()
+
 
 class Anet2:
     def __init__(self, board_size, load_path=None):
@@ -22,16 +26,16 @@ class Anet2:
             x = Dense(256, activation='relu')(x)
             x = Dense(128, activation='relu')(x)
 
-            actor = Dense(self.board_size * self.board_size, activation='softmax', name='actor_output')(x)
-            critic = Dense(1, activation='sigmoid', name='critic_output')(x)
+            actor = Dense(self.board_size * self.board_size, activation=p.actor_activation, name='actor_output')(x)
+            critic = Dense(1, activation=p.critic_activation, name='critic_output')(x)
 
             model = Model(inputs=model_input, outputs=[actor, critic], name='anet')
             losses = {
-                'actor_output': 'categorical_crossentropy',
-                'critic_output': 'mse',
+                'actor_output': p.actor_loss,
+                'critic_output': p.critic_loss,
             }
             loss_weights = {'actor_output': 1.0, 'critic_output': 1.0}
-            model.compile(optimizer=Adam(learning_rate=1e-3), loss=losses, loss_weights=loss_weights)
+            model.compile(optimizer=Adam(learning_rate=p.learning_rate), loss=losses, loss_weights=loss_weights)
             model.summary()
             self.model = model
 
