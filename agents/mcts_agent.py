@@ -21,10 +21,8 @@ class MCTSAgent(PlayerInterface):
         self.sigma = sigma
 
     def get_move(self, plot=False):
-        # TODO: move plot logic to simulator / ttop class. Just return distribution
         self.search()
         move, visit_distribution = self.best_move(plot)
-        #print(self.root.Q)
         return move, visit_distribution, self.root.Q
 
     def best_move(self, plot=False):

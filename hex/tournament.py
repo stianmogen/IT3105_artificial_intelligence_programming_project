@@ -20,10 +20,11 @@ def run_series(actor1, actor2, board_size, num_games, epsilon, rollouts, sigma, 
     actors = [actor1, actor2]
     board = HexGameState(board_size)
 
-    #Pure mcts
-    #agent1 = MCTSAgent(board, actor=actor1.model, epsilon=1, sigma=1, rollouts=rollouts, exploration=exploration)
+    if p.against_mcts:
+        agent1 = MCTSAgent(board, actor=actor1.model, epsilon=1, sigma=1, rollouts=rollouts, exploration=exploration)
+    else:
+        agent1 = MCTSAgent(board, actor=actor1.model, epsilon=epsilon, sigma=sigma, rollouts=rollouts, exploration=exploration)
 
-    agent1 = MCTSAgent(board, actor=actor1.model, epsilon=epsilon, sigma=sigma, rollouts=rollouts, exploration=exploration)
     agent2 = MCTSAgent(board, actor=actor2.model, epsilon=epsilon, sigma=sigma, rollouts=rollouts, exploration=exploration)
     agents = [agent1, agent2]
     w = random.randint(0, 1)  # Starting actor index either 0 or 1

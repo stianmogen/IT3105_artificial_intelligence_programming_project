@@ -12,10 +12,6 @@ from parameters import Parameters
 p = Parameters()
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
-
 def reinforce_winner(winner, visit_dist, move):
     if winner:
         for i in range(len(visit_dist)):
@@ -24,6 +20,7 @@ def reinforce_winner(winner, visit_dist, move):
             else:
                 visit_dist[i] = 0
     return visit_dist
+
 
 def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sigma_decay, save_interval, rollouts, exploration, buffer_size):
     if not os.path.exists(f"{size}X{size}"):
