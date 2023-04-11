@@ -27,5 +27,9 @@ class Parameters:
         self.visualize_board = False
         self.against_mcts = False
         self.print_winner = False
-        self.model_files = ['game30.h5', 'game90.h5']
+        self.model_files = ['500rolls-game250.h5', '50rolls-game250.h5', 'game231.h5', '500rolls-game125.h5']
+        self.t_num_games = 20
+        self.t_epsilon = 0.5
+        self.t_sigma = 0.5
+        self.t_rollouts = 200
 

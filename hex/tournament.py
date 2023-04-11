@@ -75,7 +75,7 @@ def run_tournament():
     for i in range(len(actors)):
         for j in range(i+1, len(actors)):
             print(f"{actors[i].name} vs {actors[j].name}")
-            actor1_wins, actor2_wins = run_series(actors[i], actors[j], board_size=size, num_games=20, epsilon=0.5, sigma=0.5, rollouts=500,
+            actor1_wins, actor2_wins = run_series(actors[i], actors[j], board_size=size, num_games=p.t_num_games, epsilon=p.t_epsilon, sigma=p.t_sigma, rollouts=p.t_rollouts,
                                     exploration=1)
             print(f"{actors[i].name} victories: {actor1_wins}")
             print(f"{actors[j].name} victories: {actor2_wins}")
