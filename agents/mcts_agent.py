@@ -31,21 +31,34 @@ class MCTSAgent(PlayerInterface):
             raise Exception("The board already has a winner")
 
         size = self.rootstate.size
-        visits = np.zeros(size*size)
 
+        """
+        visits = np.zeros(size*size)
+        
         for child in self.root.children:
             move = child.move
             visits[move] = child.N
+        
+        visits = self.root.children_N
+        """
+
         visit_distribution = normalize(self.root.children_N)
 
         if plot:
-            self.plot_dist(range(size*size), visits)
+            self.plot_dist(range(size*size), self.root.children_N)
 
         # choose the move of the most simulated node breaking ties randomly
+
+        """
         max_value = max(visits)
         max_nodes = [n for n in self.root.children if n.N == max_value]
         best_child = random.choice(max_nodes)
         move = best_child.move
+        """
+
+
+        move = np.argmax(self.root.children_N)
+
         return move, visit_distribution
 
     def plot_dist(self, size, dist):
