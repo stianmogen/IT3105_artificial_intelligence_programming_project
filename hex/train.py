@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 
 from agents.mcts_agent import MCTSAgent
@@ -7,9 +5,11 @@ from game_state import HexGameState
 from nn.anet import Anet2
 from replay_buffer import ReplayBuffer
 from parameters import Parameters
+import time
 
 p = Parameters()
 
+start_time = time.time()
 
 def reinforce_winner(winner, visit_dist, move):
     if winner:
@@ -53,10 +53,12 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sig
         actor.fit(samples, epochs=epochs)
         epsilon *= epsilon_decay
         sigma *= sigma_decay
-
         if ga % save_interval == 0 or ga == 3:
-            actor.save_model(f"{size}X{size}/game{ga}")
-    actor.save_model(f"{size}X{size}/500rolls-game{ga}")
+            actor.save_model(f"{size}X{size}/demo{ga}")
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print("Elapsed time: ", elapsed_time, " seconds")
+    actor.save_model(f"{size}X{size}/{p.rollouts}-game{ga}")
 
 
 if __name__ == "__main__":
@@ -84,6 +86,9 @@ if __name__ == "__main__":
         except RuntimeError as e:
             # Visible devices must be set before GPUs have been initialized
             print(e)
+
+
+
     play(size=p.board_size,
          num_games=p.num_games,
          batch_size=p.batch_size,
@@ -96,3 +101,7 @@ if __name__ == "__main__":
          rollouts=p.rollouts,
          exploration=p.exploration,
          buffer_size=p.buffer_size)
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print("Elapsed time: ", elapsed_time, " seconds")

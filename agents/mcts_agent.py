@@ -56,9 +56,8 @@ class MCTSAgent(PlayerInterface):
         move = best_child.move
         """
 
-
-        move = np.argmax(self.root.children_N)
-
+        max_indices = np.where(self.root.children_N == np.max(self.root.children_N))[0]
+        move = random.choice(max_indices)
         return move, visit_distribution
 
     def plot_dist(self, size, dist):
@@ -87,11 +86,9 @@ class MCTSAgent(PlayerInterface):
 
         while len(node.children) != 0:
 
-            start_time = time.time()
             max_value = max(node.children, key=lambda edge: edge.value(self.exploration)).value(self.exploration)
             max_nodes = [n for n in node.children if n.value(self.exploration) == max_value]
             node = random.choice(max_nodes)
-            end_time = time.time()
             state.place_piece(node.move)
             if node.parent.children_N[node.move] == 0:
                 return node, state

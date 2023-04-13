@@ -4,14 +4,14 @@ class Parameters:
         self.board_size = 7
 
         # TRAINING
-        self.num_games = 1000
+        self.num_games = 200
         self.batch_size = 128
         self.epochs = 5
         self.epsilon = 1.
         self.sigma = 1.
         self.epsilon_decay = 0.998
         self.sigma_decay = 0.999
-        self.save_interval = 50
+        self.save_interval = 20
         self.rollouts = 200
         self.exploration = 1
         self.buffer_size = 512
