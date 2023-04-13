@@ -13,16 +13,9 @@ class Node:
         self.children = []
         self.children_N = np.zeros(p.board_size**2, dtype=np.float32)
         self.children_scores = np.zeros(p.board_size**2, dtype=np.float32)
-        self.children_values = np.zeros(p.board_size**2, dtype=np.float32)
-        self.N = 0
-        self.score = 0
 
     @property
     def Q(self):
-        return self.score / self.N
-
-    @property
-    def Q2(self):
         return self.parent.children_scores[self.move] / self.parent.children_N[self.move]
 
     def add_children(self, children):
@@ -34,4 +27,3 @@ class Node:
             return 0 if c == 0 else np.Inf
         else:
             return (self.parent.children_scores[self.move] / self.parent.children_N[self.move]) + c * np.sqrt(np.log(self.parent.parent.children_N[self.parent.move]) / (1 + self.parent.children_N[self.move]))
-

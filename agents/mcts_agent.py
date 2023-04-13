@@ -7,7 +7,7 @@ import numpy as np
 from node import Node
 from hex.player import PlayerInterface
 from utilities import normalize
-
+import time
 
 class MCTSAgent(PlayerInterface):
 
@@ -23,7 +23,7 @@ class MCTSAgent(PlayerInterface):
     def get_move(self, plot=False):
         self.search()
         move, visit_distribution = self.best_move(plot)
-        return move, visit_distribution, self.root.Q2
+        return move, visit_distribution, self.root.Q
 
     def best_move(self, plot=False):
         # TODO: move plot logic to simulator / ttop class. Just return distribution
@@ -65,18 +65,6 @@ class MCTSAgent(PlayerInterface):
         plt.bar(size, dist)
         plt.show()
 
-    def distribution(self):
-        if self.rootstate.winner is not None:
-            return None
-
-        size = self.rootstate.size
-        visits = np.zeroes(size*size)
-        for child in self.root.children:
-            move = child.move
-            visits[move] = child.N
-        D = normalize(visits)
-        return self.rootstate.board, D
-
     def search(self):
         self.root = Node(move=0)
         self.root.parent = Node()
@@ -99,11 +87,11 @@ class MCTSAgent(PlayerInterface):
 
         while len(node.children) != 0:
 
+            start_time = time.time()
             max_value = max(node.children, key=lambda edge: edge.value(self.exploration)).value(self.exploration)
-
             max_nodes = [n for n in node.children if n.value(self.exploration) == max_value]
             node = random.choice(max_nodes)
-
+            end_time = time.time()
             state.place_piece(node.move)
             if node.parent.children_N[node.move] == 0:
                 return node, state
@@ -136,8 +124,6 @@ class MCTSAgent(PlayerInterface):
 
     def backup(self, node, reward):
         while node is not None:
-            node.N += 1
-            node.score += reward
             if node.parent is not None:
                 node.parent.children_N[node.move] += 1
                 node.parent.children_scores[node.move] += reward
