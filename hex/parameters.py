@@ -1,20 +1,21 @@
 class Parameters:
     def __init__(self):
         # BOARD
-        self.board_size = 7
+        self.board_size = 5
 
         # TRAINING
         self.num_games = 200
         self.batch_size = 128
         self.epochs = 5
-        self.epsilon = 1.
-        self.sigma = 1.
-        self.epsilon_decay = 0.998
-        self.sigma_decay = 0.999
+        self.epsilon = 1.2
+        self.sigma = 1.2
+        self.epsilon_decay = 0.999
+        self.sigma_decay = 0.998
         self.save_interval = 20
         self.rollouts = 200
         self.exploration = 1
         self.buffer_size = 512
+        self.model_name = "demo5"
 
         # MODEL
         self.learning_rate = 1e-3
@@ -27,9 +28,10 @@ class Parameters:
         self.visualize_board = False
         self.against_mcts = False
         self.print_winner = False
-        self.model_files = ['500rolls-game250.h5', '50rolls-game250.h5', 'game231.h5', '500rolls-game125.h5']
-        self.t_num_games = 20
+        self.model_files = ['demo5-180.h5', 'demo5-1.h5']
+        self.t_num_games = 30
         self.t_epsilon = 0.5
         self.t_sigma = 0.5
-        self.t_rollouts = 200
+        self.t_rollouts = 10
+        self.t_num_tournaments = 5
 

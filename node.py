@@ -11,8 +11,8 @@ class Node:
         self.move = move
         self.parent = parent
         self.children = []
-        self.children_N = np.zeros(p.board_size**2, dtype=np.float32)
-        self.children_scores = np.zeros(p.board_size**2, dtype=np.float32)
+        self.N = 0
+        self.score = 0
 
     @property
     def Q(self):

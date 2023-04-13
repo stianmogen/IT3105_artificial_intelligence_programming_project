@@ -86,5 +86,5 @@ def load_saved_model(filename):
     print(f"Model {filename} loaded succesfully")
     return model
 
-
-run_tournament()
+for i in range(p.t_num_tournaments):
+    run_tournament()

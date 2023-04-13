@@ -7,7 +7,7 @@ import numpy as np
 from node import Node
 from hex.player import PlayerInterface
 from utilities import normalize
-import time
+
 
 class MCTSAgent(PlayerInterface):
 
@@ -31,33 +31,21 @@ class MCTSAgent(PlayerInterface):
             raise Exception("The board already has a winner")
 
         size = self.rootstate.size
-
-        """
         visits = np.zeros(size*size)
-        
+
         for child in self.root.children:
             move = child.move
             visits[move] = child.N
-        
-        visits = self.root.children_N
-        """
-
         visit_distribution = normalize(self.root.children_N)
 
         if plot:
-            self.plot_dist(range(size*size), self.root.children_N)
+            self.plot_dist(range(size*size), visits)
 
         # choose the move of the most simulated node breaking ties randomly
-
-        """
         max_value = max(visits)
         max_nodes = [n for n in self.root.children if n.N == max_value]
         best_child = random.choice(max_nodes)
         move = best_child.move
-        """
-
-        max_indices = np.where(self.root.children_N == np.max(self.root.children_N))[0]
-        move = random.choice(max_indices)
         return move, visit_distribution
 
     def plot_dist(self, size, dist):
@@ -65,10 +53,7 @@ class MCTSAgent(PlayerInterface):
         plt.show()
 
     def search(self):
-        self.root = Node(move=0)
-        self.root.parent = Node()
-        self.root.parent.children.append(self.root)
-
+        self.root = Node()
 
         for _ in range(self.rollouts):
             node, state = self.select_node()
@@ -85,12 +70,11 @@ class MCTSAgent(PlayerInterface):
         state = copy.deepcopy(self.rootstate)
 
         while len(node.children) != 0:
-
             max_value = max(node.children, key=lambda edge: edge.value(self.exploration)).value(self.exploration)
             max_nodes = [n for n in node.children if n.value(self.exploration) == max_value]
             node = random.choice(max_nodes)
             state.place_piece(node.move)
-            if node.parent.children_N[node.move] == 0:
+            if node.N == 0:
                 return node, state
 
         if self.expand(node, state):
@@ -121,8 +105,10 @@ class MCTSAgent(PlayerInterface):
 
     def backup(self, node, reward):
         while node is not None:
+            node.N += 1
+            node.score += reward
             if node.parent is not None:
                 node.parent.children_N[node.move] += 1
-                node.parent.children_scores[node.move] += reward
+                node.parent.children_scores[node.move] += 1
             node = node.parent
             reward = 1 - reward
