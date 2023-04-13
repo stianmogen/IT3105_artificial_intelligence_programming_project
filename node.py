@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 
 from hex.parameters import Parameters
@@ -11,6 +13,7 @@ class Node:
         self.children = []
         self.children_N = np.zeros(p.board_size**2, dtype=np.float32)
         self.children_scores = np.zeros(p.board_size**2, dtype=np.float32)
+        self.children_values = np.zeros(p.board_size**2, dtype=np.float32)
         self.N = 0
         self.score = 0
 
@@ -18,11 +21,17 @@ class Node:
     def Q(self):
         return self.score / self.N
 
+    @property
+    def Q2(self):
+        return self.parent.children_scores[self.move] / self.parent.children_N[self.move]
+
     def add_children(self, children):
         self.children += children
 
+
     def value(self, c):
-        if self.N == 0:
+        if self.parent.children_N[self.move] == 0:
             return 0 if c == 0 else np.Inf
         else:
-            return self.Q + c * np.sqrt(np.log(self.parent.N) / (1 + self.N))
+            return (self.parent.children_scores[self.move] / self.parent.children_N[self.move]) + c * np.sqrt(np.log(self.parent.parent.children_N[self.parent.move]) / (1 + self.parent.children_N[self.move]))
+

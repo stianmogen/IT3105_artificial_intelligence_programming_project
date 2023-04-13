@@ -23,7 +23,7 @@ class MCTSAgent(PlayerInterface):
     def get_move(self, plot=False):
         self.search()
         move, visit_distribution = self.best_move(plot)
-        return move, visit_distribution, self.root.Q
+        return move, visit_distribution, self.root.Q2
 
     def best_move(self, plot=False):
         # TODO: move plot logic to simulator / ttop class. Just return distribution
@@ -78,7 +78,10 @@ class MCTSAgent(PlayerInterface):
         return self.rootstate.board, D
 
     def search(self):
-        self.root = Node()
+        self.root = Node(move=0)
+        self.root.parent = Node()
+        self.root.parent.children.append(self.root)
+
 
         for _ in range(self.rollouts):
             node, state = self.select_node()
@@ -95,11 +98,14 @@ class MCTSAgent(PlayerInterface):
         state = copy.deepcopy(self.rootstate)
 
         while len(node.children) != 0:
+
             max_value = max(node.children, key=lambda edge: edge.value(self.exploration)).value(self.exploration)
+
             max_nodes = [n for n in node.children if n.value(self.exploration) == max_value]
             node = random.choice(max_nodes)
+
             state.place_piece(node.move)
-            if node.N == 0:
+            if node.parent.children_N[node.move] == 0:
                 return node, state
 
         if self.expand(node, state):
@@ -134,6 +140,6 @@ class MCTSAgent(PlayerInterface):
             node.score += reward
             if node.parent is not None:
                 node.parent.children_N[node.move] += 1
-                node.parent.children_scores[node.move] += 1
+                node.parent.children_scores[node.move] += reward
             node = node.parent
             reward = 1 - reward
