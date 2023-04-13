@@ -1,12 +1,14 @@
 import os
 import random
 
+import numpy as np
 from keras.models import load_model
 
 from hex.parameters import Parameters
 from nn.anet import Anet2
 from train import HexGameState
 from train import MCTSAgent
+import matplotlib.pyplot as plt
 
 p = Parameters()
 
@@ -14,6 +16,33 @@ class Actor:
     def __init__(self, name, model):
         self.name = name
         self.model = model
+
+def plot_results(results):
+    # Extract player names
+    players = list(set([result[0] for game in results for result in game]))
+
+    # Create subplots for each game
+    fig, axs = plt.subplots(nrows=len(results), figsize=(8, 6), sharex=True)
+
+    # Iterate over games
+    for i, game in enumerate(results):
+
+        # Extract scores for this game
+        scores = np.zeros(len(players))
+        for result in game:
+            scores[players.index(result[0])] = result[1]
+
+        # Plot stacked bar chart
+        axs[i].bar(players, scores)
+        axs[i].set_title(f"Game {i + 1}")
+        axs[i].set_ylim(0, p.t_num_games)  # Set y-axis limit for consistency
+
+    # Add axis labels and title
+    fig.suptitle("Player Scores for Multiple Games")
+
+    # Adjust spacing and display chart
+    fig.tight_layout()
+    plt.show()
 
 
 def run_series(actor1, actor2, board_size, num_games, epsilon, rollouts, sigma, exploration):
@@ -64,6 +93,7 @@ def run_tournament():
     actors = []
     size = p.board_size
     actors_dir = f"{size}X{size}"
+    results = []
     for filename in os.listdir(actors_dir):
         f = os.path.join(actors_dir, filename)
         # checking if it is a file
@@ -79,7 +109,8 @@ def run_tournament():
                                     exploration=1)
             print(f"{actors[i].name} victories: {actor1_wins}")
             print(f"{actors[j].name} victories: {actor2_wins}")
-
+            results.append([[actors[i].name, actor1_wins], [actors[j].name, actor2_wins]])
+    plot_results(results)
 
 def load_saved_model(filename):
     model = load_model(filename, compile=False)
