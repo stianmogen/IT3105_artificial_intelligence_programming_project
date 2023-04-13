@@ -1,5 +1,3 @@
-import math
-
 import numpy as np
 
 from hex.parameters import Parameters
@@ -16,14 +14,13 @@ class Node:
 
     @property
     def Q(self):
-        return self.parent.children_scores[self.move] / self.parent.children_N[self.move]
+        return self.score / self.N
 
     def add_children(self, children):
         self.children += children
 
-
     def value(self, c):
-        if self.parent.children_N[self.move] == 0:
+        if self.N == 0:
             return 0 if c == 0 else np.Inf
         else:
-            return (self.parent.children_scores[self.move] / self.parent.children_N[self.move]) + c * np.sqrt(np.log(self.parent.parent.children_N[self.parent.move]) / (1 + self.parent.children_N[self.move]))
+            return self.Q + c * np.sqrt(np.log(self.parent.N) / (1 + self.N))

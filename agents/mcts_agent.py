@@ -36,7 +36,7 @@ class MCTSAgent(PlayerInterface):
         for child in self.root.children:
             move = child.move
             visits[move] = child.N
-        visit_distribution = normalize(self.root.children_N)
+        visit_distribution = normalize(visits)
 
         if plot:
             self.plot_dist(range(size*size), visits)
@@ -107,8 +107,5 @@ class MCTSAgent(PlayerInterface):
         while node is not None:
             node.N += 1
             node.score += reward
-            if node.parent is not None:
-                node.parent.children_N[node.move] += 1
-                node.parent.children_scores[node.move] += 1
             node = node.parent
             reward = 1 - reward
