@@ -13,9 +13,9 @@ class Node:
 
         :param move: the move corresponding to the node
         :param parent: the parent node
-        :param children: the list of children for the node
-        :param N: number of visits for the node
-        :param score: the score of the node
+        children: the list of children for the node
+        N: number of visits for the node
+        score: the score of the node
         """
         self.move = move
         self.parent = parent
