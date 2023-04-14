@@ -1,7 +1,9 @@
 from keras.optimizers import Adagrad, SGD, Adam
 from keras.optimizers.optimizer_v2.rmsprop import RMSProp
 
-
+"""
+Parameter class to easily change parameters in one common document
+"""
 class Parameters:
     def __init__(self):
         # BOARD
@@ -21,7 +23,7 @@ class Parameters:
         self.rollouts = 300
         self.exploration = 1
         self.buffer_size = 512
-        self.model_name = "demo7"
+        self.model_name = "divergence"
         self.plot_dist = False
         self.show_board = False
         self.optimizer = optimizers['adam']
@@ -29,8 +31,8 @@ class Parameters:
         self.lr = 1e-2
         self.lr_scheduler_decay_rate = 0.9
         self.lr_scheduler_decay_steps = 200
-        self.actor_loss = 'categorical_crossentropy'
-        self.critic_loss = 'mse'
+        self.actor_loss = 'kl_divergence'
+        self.critic_loss = 'hinge'
 
         # MODEL
         self.conv_layers = [[32, 3, 'relu'],
@@ -43,13 +45,13 @@ class Parameters:
         self.critic_activation = 'sigmoid'
 
         # TOURNAMENT
-        self.visualize_board = False
-        self.against_mcts = True
+        self.visualize_board = True
+        self.against_mcts = False
         self.print_winner = True
-        self.model_files = ['game360.h5', 'game210.h5']
+        self.model_files = ['demo5-200.h5', 'divergence-200.h5']
         self.t_num_games = 30
-        self.t_epsilon = 0.2
+        self.t_epsilon = 0.6
         self.t_sigma = 0.5
-        self.t_rollouts = 600
+        self.t_rollouts = 300
         self.t_num_tournaments = 1
 

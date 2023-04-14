@@ -10,7 +10,7 @@ from utilities import normalize
 """
 This class implements Monte Carlo Tree Search
 Inherits the PlayerInterface class, defining required methods for playing the given game
-Uses a tree structure (represented as disjoint set) to keep track of the game states and corresponding rewards.
+Uses a tree structure to keep track of the game states and corresponding rewards.
 
 """
 
