@@ -1,11 +1,13 @@
 import numpy as np
 
+import time
 from agents.mcts_agent import MCTSAgent
 from game_state import HexGameState
 from nn.anet import Anet2
 from replay_buffer import ReplayBuffer
 from parameters import Parameters
-import time
+
+import matplotlib.pyplot as plt
 
 p = Parameters()
 
@@ -28,13 +30,15 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sig
     actor = Anet2(board_size=(size))
     replayBuffer = ReplayBuffer(capacity=buffer_size)
 
-    for ga in range(1, num_games + 1):
+    for ga in range(0, num_games + 1):
         hex_game = HexGameState(size)
         player1 = MCTSAgent(hex_game, actor=actor, epsilon=epsilon, sigma=sigma, rollouts=rollouts, exploration=exploration)
 
         print(f"GAME {ga}, epsilon = {epsilon}, sigma = {sigma}")
         while hex_game.winner == 0:
-            move, visit_dist, q = player1.get_move(True if (ga % save_interval == 0 or ga == 3) else False)
+            move, visit_dist, q = player1.get_move()
+            if p.plot_dist and ga % save_interval == 0:
+                plot_dist(size, visit_dist)
             board = hex_game.clone_board()
             if hex_game.current_player == 2:
                 board = np.array([[1 if tile == 2 else (2 if tile == 1 else 0)] for tile in board])
@@ -45,9 +49,9 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sig
             visit_dist = reinforce_winner(hex_game.winner, visit_dist, move)
             replayBuffer.push((board, visit_dist, q))
 
-
-            if ga % save_interval == 0 or ga == 3:
+            if p.show_board and ga % save_interval == 0:
                 hex_game.print_board()
+
         print(f'Player {hex_game.winner} wins!')
         samples = replayBuffer.sample(batch_size)
         actor.fit(samples, epochs=epochs)
@@ -105,3 +109,7 @@ if __name__ == "__main__":
     end_time = time.time()
     elapsed_time = end_time - start_time
     print("Elapsed time: ", elapsed_time, " seconds")
+
+def plot_dist(size, dist):
+    plt.bar(size, dist)
+    plt.show()
