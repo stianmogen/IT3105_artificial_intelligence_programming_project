@@ -46,6 +46,8 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sig
                 visit_dist = visit_dist.reshape((size, size)).T.flatten()
 
             hex_game.place_piece(move)
+            player1.move(move)
+
             visit_dist = reinforce_winner(hex_game.winner, visit_dist, move)
             replayBuffer.push((board, visit_dist, q))
 

@@ -19,6 +19,16 @@ class MCTSAgent(PlayerInterface):
         self.epsilon = epsilon
         self.sigma = sigma
 
+    def move(self, move):
+        for child in self.root.children:
+            if child.move == move:
+                self.root = child
+                self.root.parent = None
+                break
+        else:
+            print("Could not find this part of the search tree")
+            self.root = Node()
+
     def get_move(self):
         self.search()
         move, visit_distribution = self.best_move()
@@ -44,8 +54,6 @@ class MCTSAgent(PlayerInterface):
         return move, visit_distribution
 
     def search(self):
-        self.root = Node()
-
         for _ in range(self.rollouts):
             node, state = self.select_node()
             if random.random() > self.sigma:
