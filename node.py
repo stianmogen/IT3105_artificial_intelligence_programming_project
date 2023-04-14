@@ -10,7 +10,6 @@ Node class for representing tree structure in Monte Carlo Search
 class Node:
     def __init__(self, move=None, parent=None):
         """
-
         :param move: the move corresponding to the node
         :param parent: the parent node
         children: the list of children for the node
