@@ -22,7 +22,6 @@ def plot_results(results):
     players = list(set([result[0] for game in results for result in game]))
 
     # Create subplots for each game
-    print(len(results))
     fig, axs = plt.subplots(nrows=len(results), figsize=(8, 6), sharex=True)
     if len(results) == 1:
         axs = [axs]
@@ -32,10 +31,7 @@ def plot_results(results):
 
         # Extract scores for this game
         scores = np.zeros(len(players))
-        print(scores)
         for result in game:
-            print(result)
-            print(game)
             scores[players.index(result[0])] = result[1]
 
         # Plot stacked bar chart
@@ -57,6 +53,7 @@ def run_series(actor1, actor2, board_size, num_games, epsilon, rollouts, sigma, 
 
     if p.against_mcts:
         agent1 = MCTSAgent(board, actor=actor1.model, epsilon=1, sigma=1, rollouts=rollouts, exploration=exploration)
+        actor1.name = "MCTS"
     else:
         agent1 = MCTSAgent(board, actor=actor1.model, epsilon=epsilon, sigma=sigma, rollouts=rollouts, exploration=exploration)
 
@@ -73,10 +70,14 @@ def run_series(actor1, actor2, board_size, num_games, epsilon, rollouts, sigma, 
         player2 = agents[b]
         while not board.winner:
             move, _, _ = player1.get_move()
+            player1.move(move)
+            player2.move(move)
             board.place_piece(move)
             board.print_board() if p.visualize_board else None
             if not board.winner:
                 move, _, _ = player2.get_move()
+                player1.move(move)
+                player2.move(move)
                 board.place_piece(move)
                 board.print_board() if p.visualize_board else None
         #print("WINNER", board.winner)
