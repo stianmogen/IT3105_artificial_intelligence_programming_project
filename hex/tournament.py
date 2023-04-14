@@ -22,14 +22,20 @@ def plot_results(results):
     players = list(set([result[0] for game in results for result in game]))
 
     # Create subplots for each game
+    print(len(results))
     fig, axs = plt.subplots(nrows=len(results), figsize=(8, 6), sharex=True)
+    if len(results) == 1:
+        axs = [axs]
 
     # Iterate over games
     for i, game in enumerate(results):
 
         # Extract scores for this game
         scores = np.zeros(len(players))
+        print(scores)
         for result in game:
+            print(result)
+            print(game)
             scores[players.index(result[0])] = result[1]
 
         # Plot stacked bar chart
