@@ -1,7 +1,6 @@
 import copy
 import random
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 from node import Node
@@ -20,13 +19,12 @@ class MCTSAgent(PlayerInterface):
         self.epsilon = epsilon
         self.sigma = sigma
 
-    def get_move(self, plot=False):
+    def get_move(self):
         self.search()
-        move, visit_distribution = self.best_move(plot)
+        move, visit_distribution = self.best_move()
         return move, visit_distribution, self.root.Q
 
-    def best_move(self, plot=False):
-        # TODO: move plot logic to simulator / ttop class. Just return distribution
+    def best_move(self):
         if self.rootstate.winner != 0:
             raise Exception("The board already has a winner")
 
@@ -38,19 +36,12 @@ class MCTSAgent(PlayerInterface):
             visits[move] = child.N
         visit_distribution = normalize(visits)
 
-        if plot:
-            self.plot_dist(range(size*size), visits)
-
         # choose the move of the most simulated node breaking ties randomly
         max_value = max(visits)
         max_nodes = [n for n in self.root.children if n.N == max_value]
         best_child = random.choice(max_nodes)
         move = best_child.move
         return move, visit_distribution
-
-    def plot_dist(self, size, dist):
-        plt.bar(size, dist)
-        plt.show()
 
     def search(self):
         self.root = Node()

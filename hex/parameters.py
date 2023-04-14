@@ -16,6 +16,8 @@ class Parameters:
         self.exploration = 1
         self.buffer_size = 512
         self.model_name = "demo7"
+        self.plot_dist = False
+        self.show_board = False
 
         # MODEL
         self.learning_rate = 1e-3
@@ -30,7 +32,7 @@ class Parameters:
         self.print_winner = False
         self.model_files = ['demo5-1.h5', 'demo5-50.h5', 'demo5-100.h5', 'demo5-175.h5']
         self.t_num_games = 30
-        self.t_epsilon = 0.5
+        self.t_epsilon = 1
         self.t_sigma = 0.5
         self.t_rollouts = 30
         self.t_num_tournaments = 1
