@@ -2,6 +2,7 @@ import numpy as np
 from keras import Input, Model
 from keras.layers import Dense, Flatten, Conv2D
 from keras.models import load_model
+from keras.optimizers.schedules.learning_rate_schedule import ExponentialDecay
 #from keras.optimizers import Adam
 from tensorflow.keras.optimizers import Adam
 
@@ -19,24 +20,38 @@ class Anet2:
         else:
             model_input = Input(shape=(self.board_size, self.board_size, 2))
 
-            x = Conv2D(filters=32, kernel_size=(3, 3), padding='same', activation='relu')(model_input)
-            x = Conv2D(filters=64, kernel_size=(2, 2), padding='same', activation='relu')(x)
-            x = Conv2D(filters=64, kernel_size=(2, 2), padding='same', activation='relu')(x)
+            for i, (filters, kernel_size, activation) in enumerate(p.conv_layers):
+                if i == 0:
+                    x = Conv2D(filters=filters, kernel_size=(kernel_size, kernel_size), padding='same', activation=activation)(model_input)
+                else:
+                    x = Conv2D(filters=filters, kernel_size=(kernel_size, kernel_size), padding='same', activation=activation)(x)
+
             x = Flatten()(x)
 
-            x = Dense(256, activation='relu')(x)
-            x = Dense(128, activation='relu')(x)
+            for units, activation in p.dense_layers:
+                x = Dense(units, activation=activation)(x)
 
             actor = Dense(self.board_size * self.board_size, activation=p.actor_activation, name='actor_output')(x)
             critic = Dense(1, activation=p.critic_activation, name='critic_output')(x)
+
 
             model = Model(inputs=model_input, outputs=[actor, critic], name='anet')
             losses = {
                 'actor_output': p.actor_loss,
                 'critic_output': p.critic_loss,
             }
-            loss_weights = {'actor_output': 1.0, 'critic_output': 1.0}
-            model.compile(optimizer=Adam(learning_rate=p.learning_rate), loss=losses, loss_weights=loss_weights)
+            lr_scheduler = ExponentialDecay(
+                initial_learning_rate=p.learning_rate,
+                decay_steps=p.lr_scheduler_decay_steps,
+                decay_rate=p.lr_scheduler_decay_rate)
+
+            optimizer = p.optimizer(learning_rate=lr_scheduler)
+
+            loss_weights = p.loss_weights
+
+            model.compile(optimizer=optimizer, loss=losses, loss_weights=loss_weights)
+
+
             model.summary()
             self.model = model
 

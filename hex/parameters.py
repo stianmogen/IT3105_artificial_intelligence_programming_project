@@ -1,7 +1,13 @@
+from keras.optimizers import Adagrad, SGD, Adam
+from keras.optimizers.optimizer_v2.rmsprop import RMSProp
+
+
 class Parameters:
     def __init__(self):
         # BOARD
         self.board_size = 7
+
+        optimizers = {'adagrad': Adagrad, 'sgd': SGD, 'rmsprop': RMSProp, 'adam': Adam}
 
         # TRAINING
         self.num_games = 250
@@ -18,6 +24,16 @@ class Parameters:
         self.model_name = "demo7"
         self.plot_dist = False
         self.show_board = False
+        self.conv_layers = [[32, 3, 'relu'],
+                            [64, 2, 'relu'],
+                            [64, 2, 'relu']]
+        self.dense_layers = [[256, 'relu'],
+                             [128, 'relu']]
+        self.optimizer = optimizers['adam']
+        self.loss_weights = {'actor_output': 1.0, 'critic_output': 1.0}
+        self.lr = 1e-2
+        self.lr_scheduler_decay_rate = 0.9
+        self.lr_scheduler_decay_steps = 200
 
         # MODEL
         self.learning_rate = 1e-3
