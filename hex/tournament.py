@@ -12,46 +12,61 @@ import matplotlib.pyplot as plt
 
 p = Parameters()
 
+"""
+Actor class to keep track of model name, and model object
+"""
 class Actor:
     def __init__(self, name, model):
         self.name = name
         self.model = model
 
 def plot_results(results):
-    # Extract player names
+    # extract player names
     players = list(set([result[0] for game in results for result in game]))
 
-    # Create subplots for each game
+    # xreate subplots for each game
     fig, axs = plt.subplots(nrows=len(results), figsize=(8, 6), sharex=True)
     if len(results) == 1:
         axs = [axs]
 
-    # Iterate over games
+    # iterate over games
     for i, game in enumerate(results):
 
-        # Extract scores for this game
+        # extract scores for this game
         scores = np.zeros(len(players))
         for result in game:
             scores[players.index(result[0])] = result[1]
 
-        # Plot stacked bar chart
+        # plot stacked bar chart
         axs[i].bar(players, scores)
         axs[i].set_title(f"Game {i + 1}")
         axs[i].set_ylim(0, p.t_num_games)  # Set y-axis limit for consistency
 
-    # Add axis labels and title
+    # add axis labels and title
     fig.suptitle("Player Scores for Multiple Games")
 
-    # Adjust spacing and display chart
+    # adjust spacing and display chart
     fig.tight_layout()
     plt.show()
 
 
 def run_series(actor1, actor2, board_size, num_games, epsilon, rollouts, sigma, exploration):
+    """
+    :param actor1: actor for player 1
+    :param actor2: actor for player 2
+    :param board_size: num of rows and columns
+    :param num_games: the amount of games to be played in one series
+    :param epsilon:
+    :param rollouts: num of rollouts
+    :param sigma:
+    :param exploration:
+    :return: winning statistics for the players
+    """
     actors = [actor1, actor2]
     board = HexGameState(board_size)
 
     if p.against_mcts:
+        # if we are to play against pure mcts, we set epsilon and sigma to 1 and change display name to MCTS
         agent1 = MCTSAgent(board, actor=actor1.model, epsilon=1, sigma=1, rollouts=rollouts, exploration=exploration)
         actor1.name = "MCTS"
     else:
@@ -119,10 +134,12 @@ def run_tournament():
             results.append([[actors[i].name, actor1_wins], [actors[j].name, actor2_wins]])
     plot_results(results)
 
+
 def load_saved_model(filename):
     model = load_model(filename, compile=False)
     print(f"Model {filename} loaded succesfully")
     return model
+
 
 for i in range(p.t_num_tournaments):
     run_tournament()

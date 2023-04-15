@@ -3,7 +3,7 @@ from keras import Input, Model
 from keras.layers import Dense, Flatten, Conv2D
 from keras.models import load_model
 from keras.optimizers.schedules.learning_rate_schedule import ExponentialDecay
-#from keras.optimizers import Adam
+# from keras.optimizers import Adam
 from tensorflow.keras.optimizers import Adam
 
 from hex.parameters import Parameters
@@ -22,9 +22,11 @@ class Anet2:
 
             for i, (filters, kernel_size, activation) in enumerate(p.conv_layers):
                 if i == 0:
-                    x = Conv2D(filters=filters, kernel_size=(kernel_size, kernel_size), padding='same', activation=activation)(model_input)
+                    x = Conv2D(filters=filters, kernel_size=(kernel_size, kernel_size), padding='same',
+                               activation=activation)(model_input)
                 else:
-                    x = Conv2D(filters=filters, kernel_size=(kernel_size, kernel_size), padding='same', activation=activation)(x)
+                    x = Conv2D(filters=filters, kernel_size=(kernel_size, kernel_size), padding='same',
+                               activation=activation)(x)
 
             x = Flatten()(x)
 
@@ -33,7 +35,6 @@ class Anet2:
 
             actor = Dense(self.board_size * self.board_size, activation=p.actor_activation, name='actor_output')(x)
             critic = Dense(1, activation=p.critic_activation, name='critic_output')(x)
-
 
             model = Model(inputs=model_input, outputs=[actor, critic], name='anet')
             losses = {
@@ -50,7 +51,6 @@ class Anet2:
             loss_weights = p.loss_weights
 
             model.compile(optimizer=optimizer, loss=losses, loss_weights=loss_weights)
-
 
             model.summary()
             self.model = model

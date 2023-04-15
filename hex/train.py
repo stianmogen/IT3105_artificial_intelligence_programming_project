@@ -73,7 +73,6 @@ def play(size, num_games, batch_size, epochs, epsilon, sigma, epsilon_decay, sig
     :param rollouts: number of rollouts per move
     :param exploration: exploration bonus
     :param buffer_size: the capacity of the replay buffer
-    :return:
     """
     # create a directory for each board size
     if not os.path.exists(f"{size}X{size}"):
