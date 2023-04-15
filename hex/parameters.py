@@ -16,7 +16,7 @@ class Parameters:
         self.batch_size = 128
         self.epochs = 5
         self.epsilon = 1
-        self.sigma = 1
+        self.sigma = 1.2
         self.epsilon_decay = 0.998
         self.sigma_decay = 0.999
         self.save_interval = 25
