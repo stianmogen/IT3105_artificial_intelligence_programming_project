@@ -42,7 +42,7 @@ class Anet2:
                 'critic_output': p.critic_loss,
             }
             lr_scheduler = ExponentialDecay(
-                initial_learning_rate=p.learning_rate,
+                initial_learning_rate=p.lr,
                 decay_steps=p.lr_scheduler_decay_steps,
                 decay_rate=p.lr_scheduler_decay_rate)
 
@@ -67,7 +67,7 @@ class Anet2:
         critic_target = np.array([sample[2] for sample in samples], dtype=np.float32)
 
         y = {"actor_output": actor_target, "critic_output": critic_target}
-        self.model.fit(x, y, verbose=1, batch_size=32, shuffle=True, epochs=epochs)
+        self.model.fit(x, y, verbose=1, batch_size=p.batch_size, shuffle=True, epochs=epochs)
 
     def best_move(self, board, player):
         mask = np.where(board == 0, 1, 0)
