@@ -16,22 +16,22 @@ class Parameters:
         # TRAINING
         self.num_games = 1000
         self.sample_size = 512
-        self.batch_size = self.sample_size
+        self.batch_size = 32
         self.epochs = 1
-        self.epsilon = 1.1
-        self.sigma = 1.1
-        self.epsilon_decay = 0.998
-        self.sigma_decay = 0.999
-        self.save_interval = 25
-        self.rollouts = 500
+        self.epsilon = 1.
+        self.sigma = 1.
+        self.epsilon_decay = 0.001
+        self.sigma_decay = 0.0005
+        self.save_interval = 100
+        self.rollouts = 200
         self.exploration = 1
         self.buffer_size = 2048
-        self.model_name = "divergence"
+        self.model_name = "discovery"
         self.plot_dist = False
         self.show_board = False
         self.optimizer = optimizers['adam']
         self.loss_weights = {'actor_output': 1.0, 'critic_output': 1.0}
-        self.lr = 1e-3
+        self.lr = 5e-4
         end_lr = 1e-6
 
         self.lr_scheduler_decay_rate = 0.9
@@ -48,21 +48,21 @@ class Parameters:
         # MODEL
         self.conv_layers = [[32, 3, 'relu'],
                             [64, 2, 'relu'],
-                            [64, 2, 'relu']]
-        self.dense_layers = [[256, 'relu'],
-                             [128, 'relu']]
+                            [64, 2, 'relu'],
+                            ]
+        self.dense_layers = [[32, 'relu']]
 
         self.actor_activation = 'softmax'
         self.critic_activation = 'sigmoid'
 
         # TOURNAMENT
-        self.visualize_board = True
-        self.against_mcts = False
+        self.visualize_board = False
+        self.against_mcts = True
         self.print_winner = True
-        self.model_files = ['demo5-200.h5', 'divergence-200.h5']
-        self.t_num_games = 30
-        self.t_epsilon = 0.6
-        self.t_sigma = 0.5
-        self.t_rollouts = 300
+        self.model_files = ['discovery-975.h5', 'discovery-1000.h5']
+        self.t_num_games = 100
+        self.t_epsilon = 0.
+        self.t_sigma = 1
+        self.t_rollouts = 200
         self.t_num_tournaments = 1
 

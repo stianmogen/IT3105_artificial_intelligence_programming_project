@@ -99,7 +99,9 @@ class MCTSAgent(PlayerInterface):
             if random.random() > self.sigma:
                 # if a random value between 0 and 1 is greater than sigma
                 # an actor predicts the given reward for the current state given the player
-                reward = self.actor.predict(state.board, state.current_player)
+                reward = 1 - self.actor.predict(state.board, state.current_player)
+
+
             else:
                 # else, perform a rollout and compute reward based on the winner
                 turn = state.current_player

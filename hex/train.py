@@ -14,6 +14,7 @@ p = Parameters()
 
 start_time = time.time()
 
+
 def use_gpu_if_present():
     """
     Method to set tensorflow config to gpu if possible
@@ -59,7 +60,8 @@ def reinforce_winner(winner, visit_dist, move):
     return visit_dist
 
 
-def play(size, num_games, sample_size, epochs, epsilon, sigma, epsilon_decay, sigma_decay, save_interval, rollouts, exploration, buffer_size):
+def play(size, num_games, sample_size, epochs, epsilon, sigma, epsilon_decay, sigma_decay, save_interval, rollouts,
+         exploration, buffer_size):
     """
     :param size: size of the game board columns and rows
     :param num_games: number of games in training
@@ -88,51 +90,52 @@ def play(size, num_games, sample_size, epochs, epsilon, sigma, epsilon_decay, si
 
     for ga in range(0, num_games + 1):
         # Low
-        print(actor.predict(np.array([1, 2, 0, 0, 0,
-                                      1, 2, 0, 0, 0,
-                                      1, 2, 0, 0, 0,
-                                      1, 2, 0, 0, 0,
-                                      0, 0, 0, 0, 0]), 1))
-        print(actor.predict(np.array([2, 2, 2, 2, 0,
-                                      1, 1, 1, 1, 0,
-                                      0, 0, 0, 0, 0,
-                                      0, 0, 0, 0, 0,
-                                      0, 0, 0, 0, 0]), 2))
-        print(actor.predict(np.array([0, 0, 0, 0, 0,
-                                      0, 2, 1, 1, 0,
-                                      0, 1, 2, 2, 0,
-                                      0, 0, 0, 0, 0,
-                                      0, 0, 0, 0, 0]), 2))
-        print(actor.predict(np.array([0, 0, 0, 0, 0,
-                                      0, 2, 2, 1, 1,
-                                      1, 1, 2, 2, 0,
-                                      0, 0, 0, 0, 0,
-                                      0, 0, 0, 0, 0]), 1))
+        a = actor.predict(np.array([1, 2, 0, 0, 0,
+                                    1, 2, 0, 0, 0,
+                                    1, 2, 0, 0, 0,
+                                    1, 2, 0, 0, 0,
+                                    0, 0, 0, 0, 0]), 1)
+        b = actor.predict(np.array([2, 2, 2, 2, 0,
+                                    1, 1, 1, 1, 0,
+                                    0, 0, 0, 0, 0,
+                                    0, 0, 0, 0, 0,
+                                    0, 0, 0, 0, 0]), 2)
+        c = actor.predict(np.array([0, 0, 0, 0, 0,
+                                    0, 2, 1, 1, 0,
+                                    0, 1, 2, 2, 0,
+                                    0, 0, 0, 0, 0,
+                                    0, 0, 0, 0, 0]), 2)
+        d = actor.predict(np.array([0, 0, 0, 0, 0,
+                                    0, 2, 2, 1, 1,
+                                    1, 1, 2, 2, 0,
+                                    0, 0, 0, 0, 0,
+                                    0, 0, 0, 0, 0]), 1)
 
         # High
-        print(actor.predict(np.array([1, 2, 0, 0, 0,
-                                      1, 2, 0, 0, 0,
-                                      1, 2, 0, 0, 0,
-                                      1, 2, 0, 0, 0,
-                                      0, 0, 0, 0, 0]), 2))
-        print(actor.predict(np.array([2, 2, 2, 2, 0,
-                                      1, 1, 1, 1, 0,
-                                      0, 0, 0, 0, 0,
-                                      0, 0, 0, 0, 0,
-                                      0, 0, 0, 0, 0]), 1))
-        print(actor.predict(np.array([0, 0, 0, 0, 0,
-                                      0, 2, 1, 1, 0,
-                                      0, 1, 2, 2, 0,
-                                      0, 0, 0, 0, 0,
-                                      0, 0, 0, 0, 0]), 1))
-        print(actor.predict(np.array([0, 0, 0, 0, 0,
-                                      0, 2, 2, 1, 1,
-                                      1, 1, 2, 2, 0,
-                                      0, 0, 0, 0, 0,
-                                      0, 0, 0, 0, 0]), 2))
+        e = actor.predict(np.array([1, 2, 0, 0, 0,
+                                    1, 2, 0, 0, 0,
+                                    1, 2, 0, 0, 0,
+                                    1, 2, 0, 0, 0,
+                                    0, 0, 0, 0, 0]), 2)
+        f = actor.predict(np.array([2, 2, 2, 2, 0,
+                                    1, 1, 1, 1, 0,
+                                    0, 0, 0, 0, 0,
+                                    0, 0, 0, 0, 0,
+                                    0, 0, 0, 0, 0]), 1)
+        g = actor.predict(np.array([0, 0, 0, 0, 0,
+                                    0, 2, 1, 1, 0,
+                                    0, 1, 2, 2, 0,
+                                    0, 0, 0, 0, 0,
+                                    0, 0, 0, 0, 0]), 1)
+        h = actor.predict(np.array([0, 0, 0, 0, 0,
+                                    0, 2, 2, 1, 1,
+                                    1, 1, 2, 2, 0,
+                                    0, 0, 0, 0, 0,
+                                    0, 0, 0, 0, 0]), 2)
+
+        print(a + b + c + d + (1-e) + (1-f) + (1-g) + (1-h))
         print(f"GAME {ga}, epsilon = {player1.epsilon}, sigma = {player1.sigma}")
 
-        replay_storage = []
         while hex_game.winner == 0:
             # gets the move, distribution, and q value from the search
             move, visit_dist, q = player1.get_move()
@@ -155,31 +158,23 @@ def play(size, num_games, sample_size, epochs, epsilon, sigma, epsilon_decay, si
             hex_game.place_piece(move)
             player1.move(move)
 
-            # visit_dist = reinforce_winner(hex_game.winner, visit_dist, move)
-            replay_storage.append((board, visit_dist))
-
-            # visit dist has winning move reinforced, if exists
-            # visit_dist = reinforce_winner(hex_game.winner, visit_dist, move)
             # pushes the training data to the replay buffer
-            replayBuffer.push((board, visit_dist, q))
+            replayBuffer.push((board, visit_dist, 1 - q))
 
             if p.show_board and ga % save_interval == 0:
                 hex_game.print_board()
 
-        for i, (board, visit_dist) in enumerate(replay_storage):
-            x = i % 2 + 1
-            replayBuffer.push((board, visit_dist, 1 if x == hex_game.winner else 0))
+        print(f'Player {hex_game.winner} wins!')
 
         hex_game.reset_board()
 
-        print(f'Player {hex_game.winner} wins!')
         # gets a random sample of size = sample_size
         samples = replayBuffer.sample(sample_size)
         # trains the actor with the sample for n epochs
         actor.fit(samples, epochs=epochs)
         # updates epsilon and sigma based on decays
-        player1.epsilon *= epsilon_decay
-        player1.sigma *= sigma_decay
+        player1.epsilon -= epsilon_decay
+        player1.sigma -= sigma_decay
         if ga % save_interval == 0 or ga == 1:
             actor.save_model(f"{size}X{size}/{p.model_name}-{ga}")
 
