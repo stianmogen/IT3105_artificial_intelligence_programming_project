@@ -3,6 +3,7 @@ import numpy as np
 import time
 from agents.mcts_agent import MCTSAgent
 from game_state import HexGameState
+from hex.test_class import TestClass
 from nn.anet import Anet2
 from replay_buffer import ReplayBuffer
 from parameters import Parameters
@@ -11,6 +12,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 
 p = Parameters()
+test_class = TestClass()
 
 start_time = time.time()
 
@@ -89,51 +91,7 @@ def play(size, num_games, sample_size, epochs, epsilon, sigma, epsilon_decay, si
     player1 = MCTSAgent(hex_game, actor=actor, epsilon=epsilon, sigma=sigma, rollouts=rollouts, exploration=exploration)
 
     for ga in range(0, num_games + 1):
-        # Low
-        a = actor.predict(np.array([1, 2, 0, 0, 0,
-                                    1, 2, 0, 0, 0,
-                                    1, 2, 0, 0, 0,
-                                    1, 2, 0, 0, 0,
-                                    0, 0, 0, 0, 0]), 1)
-        b = actor.predict(np.array([2, 2, 2, 2, 0,
-                                    1, 1, 1, 1, 0,
-                                    0, 0, 0, 0, 0,
-                                    0, 0, 0, 0, 0,
-                                    0, 0, 0, 0, 0]), 2)
-        c = actor.predict(np.array([0, 0, 0, 0, 0,
-                                    0, 2, 1, 1, 0,
-                                    0, 1, 2, 2, 0,
-                                    0, 0, 0, 0, 0,
-                                    0, 0, 0, 0, 0]), 2)
-        d = actor.predict(np.array([0, 0, 0, 0, 0,
-                                    0, 2, 2, 1, 1,
-                                    1, 1, 2, 2, 0,
-                                    0, 0, 0, 0, 0,
-                                    0, 0, 0, 0, 0]), 1)
-
-        # High
-        e = actor.predict(np.array([1, 2, 0, 0, 0,
-                                    1, 2, 0, 0, 0,
-                                    1, 2, 0, 0, 0,
-                                    1, 2, 0, 0, 0,
-                                    0, 0, 0, 0, 0]), 2)
-        f = actor.predict(np.array([2, 2, 2, 2, 0,
-                                    1, 1, 1, 1, 0,
-                                    0, 0, 0, 0, 0,
-                                    0, 0, 0, 0, 0,
-                                    0, 0, 0, 0, 0]), 1)
-        g = actor.predict(np.array([0, 0, 0, 0, 0,
-                                    0, 2, 1, 1, 0,
-                                    0, 1, 2, 2, 0,
-                                    0, 0, 0, 0, 0,
-                                    0, 0, 0, 0, 0]), 1)
-        h = actor.predict(np.array([0, 0, 0, 0, 0,
-                                    0, 2, 2, 1, 1,
-                                    1, 1, 2, 2, 0,
-                                    0, 0, 0, 0, 0,
-                                    0, 0, 0, 0, 0]), 2)
-
-        print(a + b + c + d + (1-e) + (1-f) + (1-g) + (1-h))
+        test_class.get_test_acc(actor, p.board_size) if p.show_test_acc  else None
         print(f"GAME {ga}, epsilon = {player1.epsilon}, sigma = {player1.sigma}")
 
         while hex_game.winner == 0:
