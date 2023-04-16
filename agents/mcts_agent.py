@@ -48,8 +48,8 @@ class MCTSAgent(PlayerInterface):
                 self.root.parent = None
                 break
         else:
-            # print("Could not find this part of the search tree")
-            self.root = Node()
+            #print("Could not find this part of the search tree")
+            self.reset_root()
 
     def get_move(self):
         """
@@ -61,6 +61,7 @@ class MCTSAgent(PlayerInterface):
         """
         self.search()
         move, visit_distribution = self.best_move()
+
         return move, visit_distribution, self.root.Q
 
     def best_move(self):
@@ -87,21 +88,25 @@ class MCTSAgent(PlayerInterface):
         max_nodes = [n for n in self.root.children if n.N == max_value]
         best_child = random.choice(max_nodes)
         move = best_child.move
+
         return move, visit_distribution
+
+    def reset_root(self):
+        self.root = Node()
 
     def search(self):
         """
         For the number of rollouts defined, performs rollout on selected node
         """
+
         for _ in range(self.rollouts):
             # selects a node with the given state
             node, state = self.select_node()
+
             if random.random() > self.sigma:
                 # if a random value between 0 and 1 is greater than sigma
                 # an actor predicts the given reward for the current state given the player
                 reward = 1 - self.actor.predict(state.board, state.current_player)
-
-
             else:
                 # else, perform a rollout and compute reward based on the winner
                 turn = state.current_player
@@ -120,14 +125,18 @@ class MCTSAgent(PlayerInterface):
         node = self.root
         # makes a deepcopy of the rootstate to make changes to during selection process
         state = copy.deepcopy(self.rootstate)
+
         # while there are children to search
         while len(node.children) != 0:
             # finds the maximum value based on value method for each of the child node
-            max_value = max(node.children, key=lambda edge: edge.value(self.exploration)).value(self.exploration)
-            # creates a list of all nodes with the corresponding maximum value
-            max_nodes = [n for n in node.children if n.value(self.exploration) == max_value]
+            values = np.array([edge.value(self.exploration) for edge in node.children])
+            max_value = np.max(values)
+
+            # getting index of child with max value - ties breaks randomly
+            random_max_index = np.random.choice(np.flatnonzero(values == max_value))
+
             # chooses a random node from this list of nodes
-            node = random.choice(max_nodes)
+            node = node.children[random_max_index]
             state.place_piece(node.move)
             # if the node is never visisted, it shall not be expanded, and is rather returned with the given state
             if node.N == 0:
@@ -148,13 +157,12 @@ class MCTSAgent(PlayerInterface):
         :param state: current state of game
         :return: true or false if there is something to expand
         """
-        children = []
         if state.winner != 0:
             return False  # game is over at this node so nothing to expand
 
-        for move in state.empty_spaces:
-            # appends each possible move from current state as node with move and parent to children
-            children.append(Node(move, parent))
+        # new children
+        children = [Node(move, parent) for move in state.empty_spaces]
+
         # add children to parent
         parent.add_children(children)
         return True

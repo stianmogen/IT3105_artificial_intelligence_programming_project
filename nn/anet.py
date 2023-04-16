@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 from keras import Input, Model
 from keras.layers import Dense, Flatten, Conv2D
@@ -75,7 +77,7 @@ class Anet2:
         x = np.expand_dims(x, axis=0)
 
         distribution, _ = self.model(x)
-        distribution = distribution.numpy()
+        distribution = distribution.numpy().flatten()
 
         if player == 2:
             distribution = distribution.reshape((self.board_size, self.board_size)).T.flatten()
@@ -83,19 +85,20 @@ class Anet2:
         distribution = np.multiply(mask, distribution)
         distribution = np.divide(distribution, np.sum(distribution))
 
-        return np.argmax(distribution)
+        weighted_random = random.choices(range(len(distribution)), weights=distribution, k=1)
+        return weighted_random[0]
 
     def one_hot_encode(self, board, player):
-        p1_board = np.where(board == 1, 1, 0).reshape(self.board_size, self.board_size)
-        p2_board = np.where(board == 2, 1, 0).reshape(self.board_size, self.board_size)
+        p1_board = (board == 1).astype(int).reshape(self.board_size, self.board_size)
+        p2_board = (board == 2).astype(int).reshape(self.board_size, self.board_size)
 
         ohe = np.zeros(shape=(self.board_size, self.board_size, 2))
-        for i in range(self.board_size):
-            for j in range(self.board_size):
-                if player == 1:
-                    ohe[i, j] = [p1_board[i, j], p2_board[i, j]]
-                else:
-                    ohe[i, j] = [p2_board.T[i, j], p1_board.T[i, j]]
+        if player == 1:
+            ohe[:, :, 0] = p1_board
+            ohe[:, :, 1] = p2_board
+        else:
+            ohe[:, :, 0] = p2_board.T
+            ohe[:, :, 1] = p1_board.T
 
         return ohe
 

@@ -31,7 +31,7 @@ class Parameters:
         self.show_board = False
         self.show_test_acc = True
         self.optimizer = optimizers['adam']
-        self.loss_weights = {'actor_output': 1.0, 'critic_output': 1.0}
+        self.loss_weights = {'actor_output': 1.0, 'critic_output': self.board_size * self.board_size}
         self.lr = 5e-4
         end_lr = 1e-6
 

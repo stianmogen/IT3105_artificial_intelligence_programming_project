@@ -125,6 +125,7 @@ def play(size, num_games, sample_size, epochs, epsilon, sigma, epsilon_decay, si
         print(f'Player {hex_game.winner} wins!')
 
         hex_game.reset_board()
+        player1.reset_root()
 
         # gets a random sample of size = sample_size
         samples = replayBuffer.sample(sample_size)
