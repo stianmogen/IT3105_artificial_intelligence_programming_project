@@ -1,4 +1,5 @@
 import random
+import time
 
 import numpy as np
 from keras import Input, Model
@@ -85,8 +86,9 @@ class Anet2:
         distribution = np.multiply(mask, distribution)
         distribution = np.divide(distribution, np.sum(distribution))
 
-        weighted_random = random.choices(range(len(distribution)), weights=distribution, k=1)
-        return weighted_random[0]
+        return np.argmax(distribution)
+        #weighted_random = random.choices(range(len(distribution)), weights=distribution, k=1)
+        #return weighted_random[0]
 
     def one_hot_encode(self, board, player):
         p1_board = (board == 1).astype(int).reshape(self.board_size, self.board_size)

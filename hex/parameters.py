@@ -32,8 +32,8 @@ class Parameters:
         self.show_test_acc = True
         self.optimizer = optimizers['adam']
         self.loss_weights = {'actor_output': 1.0, 'critic_output': self.board_size * self.board_size}
-        self.lr = 5e-4
-        end_lr = 1e-6
+        self.lr = 1e-3
+        end_lr = 1e-5
 
         self.lr_scheduler_decay_rate = 0.9
 

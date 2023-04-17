@@ -69,7 +69,7 @@ class TestClass:
     def get_test_acc(self, actor, n):
         if n == 5:
             self.test_5x5(actor)
-        if n == 7:
+        elif n == 7:
             self.test_7x7(actor)
         else:
             print("No test data for n =", n)
