@@ -97,8 +97,6 @@ class Anet2:
         This method is used for training the model.
         Uses the samples from the replay buffer to generate input and target values.
         :param samples: index 0 is board, index 1 is a distribution in the same shape as board, index 2 is an int
-        :param epochs: num
-        :return:
         """
         x = np.array([self.one_hot_encode(sample[0], 1) for sample in samples])
         # actor and critic target defined
