@@ -18,12 +18,12 @@ class Parameters:
         self.sample_size = 512
         self.batch_size = 64
         self.epochs = 1
-        self.epsilon = 1.2
+        self.epsilon = 1.4
         self.sigma = 1.2
-        self.alpha = 1.
+        self.alpha = 1.2
         self.epsilon_decay = 0.002
         self.sigma_decay = 0.0007
-        self.alpha_decay = 0.0005
+        self.alpha_decay = 0.0007
         self.save_interval = 100
         self.rollouts = 400
         self.exploration = 1
