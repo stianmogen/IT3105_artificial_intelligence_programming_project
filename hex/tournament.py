@@ -50,7 +50,7 @@ def plot_results(results):
     plt.show()
 
 
-def run_series(actor1, actor2, board_size, num_games, epsilon, rollouts, sigma, exploration):
+def run_series(actor1, actor2, board_size, num_games, epsilon, rollouts, sigma, alpha, exploration):
     """
     :param actor1: actor for player 1
     :param actor2: actor for player 2
@@ -67,12 +67,12 @@ def run_series(actor1, actor2, board_size, num_games, epsilon, rollouts, sigma, 
 
     if p.against_mcts:
         # if we are to play against pure mcts, we set epsilon and sigma to 1 and change display name to MCTS
-        agent1 = MCTSAgent(board, actor=actor1.model, epsilon=1, sigma=1, rollouts=rollouts, exploration=exploration)
+        agent1 = MCTSAgent(board, actor=actor1.model, epsilon=1, sigma=1, alpha=alpha, rollouts=rollouts, exploration=exploration)
         actor1.name = "MCTS"
     else:
-        agent1 = MCTSAgent(board, actor=actor1.model, epsilon=epsilon, sigma=sigma, rollouts=rollouts, exploration=exploration)
+        agent1 = MCTSAgent(board, actor=actor1.model, epsilon=epsilon, sigma=sigma, alpha=alpha, rollouts=rollouts, exploration=exploration)
 
-    agent2 = MCTSAgent(board, actor=actor2.model, epsilon=epsilon, sigma=sigma, rollouts=rollouts, exploration=exploration)
+    agent2 = MCTSAgent(board, actor=actor2.model, epsilon=epsilon, sigma=sigma, alpha=alpha, rollouts=rollouts, exploration=exploration)
     agents = [agent1, agent2]
     w = random.randint(0, 1)  # Starting actor index either 0 or 1
     b = 1 - w  # Second actor index is the one not starting
@@ -123,11 +123,10 @@ def run_tournament():
             if filename in p.model_files:
                 model = Anet2(board_size=size, load_path=f)
                 actors.append(Actor(filename, model))
-
     for i in range(len(actors)):
         for j in range(i+1, len(actors)):
             print(f"{actors[i].name} vs {actors[j].name}")
-            actor1_wins, actor2_wins = run_series(actors[i], actors[j], board_size=size, num_games=p.t_num_games, epsilon=p.t_epsilon, sigma=p.t_sigma, rollouts=p.t_rollouts,
+            actor1_wins, actor2_wins = run_series(actors[i], actors[j], board_size=size, num_games=p.t_num_games, epsilon=p.t_epsilon, sigma=p.t_sigma, alpha=p.t_alpha, rollouts=p.t_rollouts,
                                     exploration=1)
             print(f"{actors[i].name} victories: {actor1_wins}")
             print(f"{actors[j].name} victories: {actor2_wins}")

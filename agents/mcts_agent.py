@@ -1,5 +1,6 @@
 import copy
 import random
+import time
 
 import numpy as np
 
@@ -16,7 +17,7 @@ Uses a tree structure to keep track of the game states and corresponding rewards
 
 
 class MCTSAgent(PlayerInterface):
-    def __init__(self, state, actor, epsilon, sigma, exploration, rollouts=500):
+    def __init__(self, state, actor, epsilon, sigma, alpha, exploration, rollouts=500):
         """
         Initializes the MCTSAgent class with the given parameters.
 
@@ -34,6 +35,7 @@ class MCTSAgent(PlayerInterface):
         self.actor = actor
         self.epsilon = epsilon
         self.sigma = sigma
+        self.alpha = alpha
 
     def move(self, move):
         """
@@ -98,7 +100,6 @@ class MCTSAgent(PlayerInterface):
         """
         For the number of rollouts defined, performs rollout on selected node
         """
-
         for _ in range(self.rollouts):
             # selects a node with the given state
             node, state = self.select_node()
@@ -106,7 +107,8 @@ class MCTSAgent(PlayerInterface):
             if random.random() > self.sigma:
                 # if a random value between 0 and 1 is greater than sigma
                 # an actor predicts the given reward for the current state given the player
-                reward = 1 - self.actor.predict(state.board, state.current_player)
+                reward = 1 - self.actor.eval_state(state.board, state.current_player)
+
             else:
                 # else, perform a rollout and compute reward based on the winner
                 turn = state.current_player
@@ -180,7 +182,7 @@ class MCTSAgent(PlayerInterface):
                 move = random.choice(tuple(state.empty_spaces))
             else:
                 # else the best move is choses by action
-                move = self.actor.best_move(state.board, state.current_player)
+                move = self.actor.best_move(state.board, state.current_player, self.alpha)
             state.place_piece(move)
         return state.winner
 

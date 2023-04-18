@@ -18,12 +18,14 @@ class Parameters:
         self.sample_size = 512
         self.batch_size = 32
         self.epochs = 1
-        self.epsilon = 1.1
-        self.sigma = 1.1
-        self.epsilon_decay = 0.001
+        self.epsilon = 1.
+        self.sigma = 1.
+        self.alpha = 0.5
+        self.epsilon_decay = 0.002
         self.sigma_decay = 0.0005
+        self.alpha_decay = 0
         self.save_interval = 100
-        self.rollouts = 500
+        self.rollouts = 200
         self.exploration = 1
         self.buffer_size = 2048
         self.model_name = "discovery"
@@ -60,10 +62,11 @@ class Parameters:
         self.visualize_board = False
         self.against_mcts = False
         self.print_winner = True
-        self.model_files = ['discovery-300.h5', 'game231.h5']
-        self.t_num_games = 30
-        self.t_epsilon = 0.
-        self.t_sigma = 1
-        self.t_rollouts = 100
+        self.model_files = ['discovery-100', 'discovery-400.h5', 'discovery-300.h5']
+        self.t_num_games = 100
+        self.t_epsilon = 0.5
+        self.t_sigma = 0.5
+        self.t_alpha = 0.
+        self.t_rollouts = 200
         self.t_num_tournaments = 1
 

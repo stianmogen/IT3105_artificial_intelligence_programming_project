@@ -62,7 +62,7 @@ def reinforce_winner(winner, visit_dist, move):
     return visit_dist
 
 
-def play(size, num_games, sample_size, epochs, epsilon, sigma, epsilon_decay, sigma_decay, save_interval, rollouts,
+def play(size, num_games, sample_size, epochs, epsilon, sigma, alpha, epsilon_decay, sigma_decay, alpha_decay, save_interval, rollouts,
          exploration, buffer_size):
     """
     :param size: size of the game board columns and rows
@@ -71,8 +71,10 @@ def play(size, num_games, sample_size, epochs, epsilon, sigma, epsilon_decay, si
     :param epochs: epochs for training each game
     :param epsilon: actor ratio
     :param sigma: critic ratio
+    :param alpha: parameters deciding whether the model selects highest value of probs or uses weighted random
     :param epsilon_decay: actor use increase per game
     :param sigma_decay: critic use increase per game
+    :param alpha_decay: how much the alpha parameter declines for each game
     :param save_interval: how often to save the model
     :param rollouts: number of rollouts per move
     :param exploration: exploration bonus
@@ -88,11 +90,11 @@ def play(size, num_games, sample_size, epochs, epsilon, sigma, epsilon_decay, si
 
     # a new hex game state and mcts agent is instantiated for each game
     hex_game = HexGameState(size)
-    player1 = MCTSAgent(hex_game, actor=actor, epsilon=epsilon, sigma=sigma, rollouts=rollouts, exploration=exploration)
+    player1 = MCTSAgent(hex_game, actor=actor, epsilon=epsilon, sigma=sigma, alpha=alpha, rollouts=rollouts, exploration=exploration)
 
     for ga in range(0, num_games + 1):
         test_class.get_test_acc(actor, p.board_size) if p.show_test_acc  else None
-        print(f"GAME {ga}, epsilon = {player1.epsilon}, sigma = {player1.sigma}")
+        print(f"GAME {ga}, epsilon = {player1.epsilon}, sigma = {player1.sigma}, alpha = {player1.alpha}")
 
         while hex_game.winner == 0:
             # gets the move, distribution, and q value from the search
@@ -130,10 +132,11 @@ def play(size, num_games, sample_size, epochs, epsilon, sigma, epsilon_decay, si
         # gets a random sample of size = sample_size
         samples = replayBuffer.sample(sample_size)
         # trains the actor with the sample for n epochs
-        actor.fit(samples, epochs=epochs)
+        actor.fit(samples)
         # updates epsilon and sigma based on decays
         player1.epsilon -= epsilon_decay
         player1.sigma -= sigma_decay
+        player1.alpha -= alpha_decay
         if ga % save_interval == 0 or ga == 1:
             actor.save_model(f"{size}X{size}/{p.model_name}-{ga}")
 
@@ -151,8 +154,10 @@ if __name__ == "__main__":
          epochs=p.epochs,
          epsilon=p.epsilon,
          sigma=p.sigma,
+         alpha=p.alpha,
          epsilon_decay=p.epsilon_decay,
          sigma_decay=p.sigma_decay,
+         alpha_decay=p.alpha_decay,
          save_interval=p.save_interval,
          rollouts=p.rollouts,
          exploration=p.exploration,
