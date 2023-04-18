@@ -107,6 +107,8 @@ def run_series(actor1, actor2, board_size, num_games, epsilon, rollouts, sigma, 
         b = 1 - w
 
         board.reset_board()
+        player1.reset_root()
+        player2.reset_root()
 
     return statistics
 
