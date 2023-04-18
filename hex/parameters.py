@@ -20,7 +20,7 @@ class Parameters:
         self.epochs = 1
         self.epsilon = 1.
         self.sigma = 1.
-        self.alpha = 0.5
+        self.alpha = 0.33
         self.epsilon_decay = 0.002
         self.sigma_decay = 0.0005
         self.alpha_decay = 0
@@ -50,10 +50,11 @@ class Parameters:
 
         # MODEL
         self.conv_layers = [[32, 3, 'relu'],
+                            [48, 3, 'relu'],
                             [64, 2, 'relu'],
                             [64, 2, 'relu'],
                             ]
-        self.dense_layers = [[32, 'relu']]
+        self.dense_layers = [[128, 'relu']]
 
         self.actor_activation = 'softmax'
         self.critic_activation = 'sigmoid'
