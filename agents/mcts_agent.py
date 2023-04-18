@@ -105,9 +105,15 @@ class MCTSAgent(PlayerInterface):
             node, state = self.select_node()
 
             if random.random() > self.sigma:
-                # if a random value between 0 and 1 is greater than sigma
-                # an actor predicts the given reward for the current state given the player
-                reward = 1 - self.actor.eval_state(state.board, state.current_player)
+                # Since the training cases is based on the Q value of the root node and the root node is never searched
+                # when in a winning state. We don't evaluate the state if it is a winning state
+                if state.winner != 0:
+                    turn = state.current_player
+                    reward = 0 if turn == state.winner else 1
+                else:
+                    # if a random value between 0 and 1 is greater than sigma
+                    # an actor predicts the given reward for the current state given the player
+                    reward = 1 - self.actor.eval_state(state.board, state.current_player)
 
             else:
                 # else, perform a rollout and compute reward based on the winner
