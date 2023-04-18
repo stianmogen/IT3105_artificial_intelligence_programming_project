@@ -128,7 +128,7 @@ class Anet2:
         """
         data = tf.reshape(data, (self.board_size, self.board_size))
         data = tf.transpose(data)
-        return tf.squeeze(data)
+        return tf.reshape(data, [-1])
 
     @tf.function
     def predict(self, board, player):
@@ -161,7 +161,7 @@ class Anet2:
         x = self.one_hot_encode(board, player)
         x = tf.expand_dims(x, axis=0)
         distribution, _ = self.model(x)
-        distribution = tf.squeeze(distribution)
+        distribution = tf.reshape(distribution, [-1])
 
         if player == 2:
             distribution = self.transpose(distribution)
