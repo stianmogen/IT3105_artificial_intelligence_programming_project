@@ -2,10 +2,12 @@ import random
 import time
 
 import numpy as np
+import tensorflow as tf
 from keras import Input, Model
 from keras.layers import Dense, Flatten, Conv2D
 from keras.models import load_model
 from keras.optimizers.schedules.learning_rate_schedule import ExponentialDecay
+
 # from keras.optimizers import Adam
 from tensorflow.keras.optimizers import Adam
 
@@ -80,28 +82,22 @@ class Anet2:
             model.summary()
             self.model = model
 
-    def predict(self, board, player):
+    def eval_state(self, board, player):
         """
-        Predicts the values of the game board based on the state and player
-        :param board: hex game at current state
-        :param player: player to make next move
-        :return: board prediction
+        This method uses the graph execution of the predict method and converts the output back to usable format
+        :param board: 1D array representing a board
+        :param player: the current player
+        :return: float (0-1) representing evaluation of current board state
         """
-        # encodes the board based on the player
-        x = self.one_hot_encode(board, player)
-        x = np.expand_dims(x, axis=0)
-        # gets the critic prediction from the model and returns this
-        _, critic = self.model(x)
-        return critic.numpy()[0][0]
+        return self.predict(board, player).numpy()
 
-    def fit(self, samples, epochs):
+
+    def fit(self, samples):
         """
-        trains the model based on the sample data
-        :param samples: a sample set of training data
-        :param epochs: how many epochs to train for
-        :return:
+        This method is used for training the model.
+        Uses the samples from the replay buffer to generate input and target values.
+        :param samples: index 0 is board, index 1 is a distribution in the same shape as board, index 2 is an int
         """
-        # encodes the board in samples to be of player 1, to train on similar data
         x = np.array([self.one_hot_encode(sample[0], 1) for sample in samples])
         # actor and critic target defined
         actor_target = np.array([sample[1] for sample in samples], dtype=np.float32)
@@ -109,56 +105,98 @@ class Anet2:
 
         # dictionary of actor and critic output targets
         y = {"actor_output": actor_target, "critic_output": critic_target}
-        # train the model using the input and target tensors
-        self.model.fit(x, y, verbose=1, batch_size=p.batch_size, shuffle=True, epochs=epochs)
+        self.model.fit(x, y, verbose=1, batch_size=p.batch_size, shuffle=True, epochs=p.epochs)
 
-    def best_move(self, board, player):
+    def best_move(self, board, player, alpha):
         """
-        classifies the best move based on the actor output from a given state and player
-        :param board: current state
-        :param player: to play next move
-        :return: best move
+        This method uses the graph execution of the policy method and converts the output to numpy
+        so that it can be used normally.
+        :param board: 1D array representing a board
+        :param player: the current player
+        :param alpha: value used in the policy to decide which value to return
+        :return: value representing index of the best move
         """
-        # masks each empty position on the board
-        mask = np.where(board == 0, 1, 0)
-        # encodes the board based on current player
+        return self.policy(board, player, alpha).numpy()
+
+    @tf.function
+    def transpose(self, data):
+        """
+        This method transposes a 1D array representing a board-state. Input is automatically transferred to a tf.Tensor
+        and uses graph execution for optimization.
+        :param data: 1D board
+        :return: transposed 1D board where rows are columns and columns are rows in the 2D version
+        """
+        data = tf.reshape(data, (self.board_size, self.board_size))
+        data = tf.transpose(data)
+        return tf.reshape(data, [-1])
+
+    @tf.function
+    def predict(self, board, player):
+        """
+        This method one-hot encodes the board-state and predicts how good the current position is. Input is
+        automatically transferred to a tf.Tensor
+        and uses graph execution for optimization.
+        :param board: 1D array representing board
+        :param player: the player to play next
+        :return: evaluation of the current board state (range 0-1)
+        """
         x = self.one_hot_encode(board, player)
-        x = np.expand_dims(x, axis=0)
+        x = tf.expand_dims(x, axis=0)
+        _, critic = self.model(x)
+        return critic[0][0]
 
-        # distribution is the actors output from the model
+    @tf.function
+    def policy(self, board, player, alpha):
+        """
+        This method calculates the probability distribution of the current available moves.
+        As we are always calculating the board from whites perspective we transpose the final results
+        since the input into the model was also transposed. Input is automatically transferred to a tf.Tensor
+        and uses graph execution for optimization.
+        :param board: 1D array representing board
+        :param player: 1 or 2 representing the current player
+        :param alpha: variable deciding how likely the model will return best or weighted random move
+        :return: returns either the best move or a random move weighted by the distribution
+        """
+        mask = tf.where(board == 0, 1., 0.)
+        x = self.one_hot_encode(board, player)
+        x = tf.expand_dims(x, axis=0)
         distribution, _ = self.model(x)
-        distribution = distribution.numpy().flatten()
+        distribution = tf.reshape(distribution, [-1])
 
         if player == 2:
-            distribution = distribution.reshape((self.board_size, self.board_size)).T.flatten()
+            distribution = self.transpose(distribution)
 
-        # distribution is multiplied by mask and normalized
-        distribution = np.multiply(mask, distribution)
-        distribution = np.divide(distribution, np.sum(distribution))
+        # Masking invalid board states prevents the actor from returning illegal moves
+        distribution = tf.multiply(mask, distribution)
 
-        # returns the highest distribution
-        return np.argmax(distribution)
-        #weighted_random = random.choices(range(len(distribution)), weights=distribution, k=1)
-        #return weighted_random[0]
+        # Re-normalizing the data
+        distribution = tf.divide(distribution, tf.reduce_sum(distribution))
 
+        if random.random() > alpha:
+            # Selecting the move with the highest probability
+            return tf.math.argmax(distribution)
+        else:
+            # Selecting move randomly, but weighted by the distribution
+            return tf.random.categorical(tf.expand_dims(tf.math.log(distribution, 0), 0), 1)[0][0]
+
+    @tf.function
     def one_hot_encode(self, board, player):
         """
-        Method to encode the board based on the current player
-        If player is two, the board needs to be transformed to account for players win conditions
-        :param board:
-        :param player:
-        :return:
+        This method one hot encodes the board state. It also transposes the board and swaps the players
+        if the current player is 2. This ensures that input is on the same format regardless of the current player
+        and the model only need to learn how to win in one direction.
+        :param board: 1D array representing board
+        :param player: the current player
+        :return: one how encoded preprocessed board
         """
-        p1_board = (board == 1).astype(int).reshape(self.board_size, self.board_size)
-        p2_board = (board == 2).astype(int).reshape(self.board_size, self.board_size)
+        p1_board = tf.reshape(board == 1, (self.board_size, self.board_size))
+        p2_board = tf.reshape(board == 2, (self.board_size, self.board_size))
 
-        ohe = np.zeros(shape=(self.board_size, self.board_size, 2))
         if player == 1:
-            ohe[:, :, 0] = p1_board
-            ohe[:, :, 1] = p2_board
+            ohe = tf.concat([tf.expand_dims(p1_board, -1), tf.expand_dims(p2_board, -1)], axis=-1)
         else:
-            ohe[:, :, 0] = p2_board.T
-            ohe[:, :, 1] = p1_board.T
+            ohe = tf.concat([tf.expand_dims(tf.transpose(p2_board), -1), tf.expand_dims(tf.transpose(p1_board), -1)],
+                            axis=-1)
 
         return ohe
 

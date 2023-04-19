@@ -12,7 +12,7 @@ class MyClient(ActorClient):
   f = "hex/7x7/game231.h5"
   self.model = Anet2(board_size=7, load_path=f)
   self.state = HexGameState(size=7)
-  self.mcts = MCTSAgent(self.state, self.model, 1, 0.5, 0.5, rollouts=200)
+  self.mcts = MCTSAgent(self.state, self.model, 1, 1, 1, 1, rollouts=200)
 
  def handle_game_start(self, start_player):
   self.state.reset_board()
@@ -26,10 +26,10 @@ class MyClient(ActorClient):
   for i, cell in enumerate(state[1:]):
    if cell != 0 and self.state.board[i] == 0:
     self.state.place_piece(i)
-
+    self.mcts.move(i)
   board_size = int((len(state) - 1) ** 0.5)
   move, _, _ = self.mcts.get_move()
-
+  self.mcts.move(move)
   self.state.place_piece(move)
   y = move // board_size
   x = move % board_size

@@ -16,24 +16,26 @@ class Parameters:
         # TRAINING
         self.num_games = 1000
         self.sample_size = 512
-        self.batch_size = 32
+        self.batch_size = 64
         self.epochs = 1
-        self.epsilon = 1.1
-        self.sigma = 1.1
-        self.epsilon_decay = 0.001
-        self.sigma_decay = 0.0005
+        self.epsilon = 1.4
+        self.sigma = 1.2
+        self.alpha = 1.2
+        self.epsilon_decay = 0.002
+        self.sigma_decay = 0.0007
+        self.alpha_decay = 0.0007
         self.save_interval = 100
-        self.rollouts = 500
+        self.rollouts = 400
         self.exploration = 1
         self.buffer_size = 2048
-        self.model_name = "discovery"
+        self.model_name = "g"
         self.plot_dist = False
         self.show_board = False
         self.show_test_acc = True
         self.optimizer = optimizers['adam']
-        self.loss_weights = {'actor_output': 1.0, 'critic_output': self.board_size * self.board_size}
-        self.lr = 1e-3
-        end_lr = 1e-5
+        self.loss_weights = {'actor_output': 1.0, 'critic_output': self.board_size * self.board_size / 2}
+        self.lr = 5e-4
+        end_lr = 1e-6
 
         self.lr_scheduler_decay_rate = 0.9
 
@@ -48,22 +50,25 @@ class Parameters:
 
         # MODEL
         self.conv_layers = [[32, 3, 'relu'],
+                            [48, 3, 'relu'],
                             [64, 2, 'relu'],
                             [64, 2, 'relu'],
                             ]
-        self.dense_layers = [[32, 'relu']]
+        self.dense_layers = [[128, 'relu'],
+                             [64, 'relu']]
 
         self.actor_activation = 'softmax'
         self.critic_activation = 'sigmoid'
 
         # TOURNAMENT
         self.visualize_board = False
-        self.against_mcts = False
+        self.against_mcts = True
         self.print_winner = True
-        self.model_files = ['discovery-300.h5', 'game231.h5']
-        self.t_num_games = 30
-        self.t_epsilon = 0.
-        self.t_sigma = 1
-        self.t_rollouts = 100
+        self.model_files = ['graph-300.h5', 'game231.h5']
+        self.t_num_games = 100
+        self.t_epsilon = 0
+        self.t_sigma = 0.5
+        self.t_alpha = 1.
+        self.t_rollouts = 200
         self.t_num_tournaments = 1
 
