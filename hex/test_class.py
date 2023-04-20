@@ -75,4 +75,4 @@ class TestClass:
             self.test_7x7(actor)
         else:
             pass
-            print("No test data for n =", n)
+            #print("No test data for n =", n)

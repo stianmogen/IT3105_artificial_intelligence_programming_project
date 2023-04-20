@@ -58,28 +58,27 @@ class Anet2:
             critic = Dense(1, activation=p.critic_activation, name='critic_output')(x)
 
             # define model with input, and the actor and critic outputs
-            model = Model(inputs=model_input, outputs=[actor, critic], name='anet')
+            self.model = Model(inputs=model_input, outputs=[actor, critic], name='anet')
 
-            # loss functions are defined in paremters file
-            losses = {
-                'actor_output': p.actor_loss,
-                'critic_output': p.critic_loss,
-            }
-            # learning rate scheduler. higher learning rate at start which decays at a step rate
-            lr_scheduler = ExponentialDecay(
-                initial_learning_rate=p.lr,
-                decay_steps=p.lr_scheduler_decay_steps,
-                decay_rate=p.lr_scheduler_decay_rate)
+        # loss functions are defined in paremters file
+        losses = {
+            'actor_output': p.actor_loss,
+            'critic_output': p.critic_loss,
+        }
+        # learning rate scheduler. higher learning rate at start which decays at a step rate
+        lr_scheduler = ExponentialDecay(
+            initial_learning_rate=p.lr,
+            decay_steps=p.lr_scheduler_decay_steps,
+            decay_rate=p.lr_scheduler_decay_rate)
 
-            optimizer = p.optimizer(learning_rate=lr_scheduler)
+        optimizer = p.optimizer(learning_rate=lr_scheduler)
 
-            loss_weights = p.loss_weights
+        loss_weights = p.loss_weights
 
-            # model is compiled with the learning rate scheduler, and the loss function and corresponding weights
-            model.compile(optimizer=optimizer, loss=losses, loss_weights=loss_weights)
+        # model is compiled with the learning rate scheduler, and the loss function and corresponding weights
+        self.model.compile(optimizer=optimizer, loss=losses, loss_weights=loss_weights)
 
-            model.summary()
-            self.model = model
+        self.model.summary()
 
     def eval_state(self, board, player):
         """

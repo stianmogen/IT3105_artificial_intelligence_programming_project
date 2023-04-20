@@ -9,7 +9,7 @@ Parameter class to easily change parameters in one common document
 class Parameters:
     def __init__(self):
         # BOARD
-        self.board_size = 5
+        self.board_size = 4
 
         optimizers = {'adagrad': Adagrad, 'sgd': SGD, 'rmsprop': RMSProp, 'adam': Adam}
 
@@ -28,7 +28,7 @@ class Parameters:
         self.rollouts = 100
         self.exploration = 1
         self.buffer_size = 2048
-        self.model_name = "demo"
+        self.model_name = ""
         self.plot_dist = False
         self.show_board = False
         self.show_test_acc = True
@@ -71,4 +71,5 @@ class Parameters:
         self.t_alpha = 0.
         self.t_rollouts = 50
         self.t_num_tournaments = 1
+        self.t_exploration = 1
 
