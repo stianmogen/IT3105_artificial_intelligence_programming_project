@@ -24,7 +24,7 @@ def plot_results(results):
     # extract player names
     players = list(set([result[0] for game in results for result in game]))
 
-    # xreate subplots for each game
+    # create subplots for each game
     fig, axs = plt.subplots(nrows=len(results), figsize=(8, 6), sharex=True)
     if len(results) == 1:
         axs = [axs]
@@ -95,8 +95,6 @@ def run_series(actor1, actor2, board_size, num_games, epsilon, rollouts, sigma, 
                 player2.move(move)
                 board.place_piece(move)
                 board.print_board() if p.visualize_board else None
-        #print("WINNER", board.winner)
-        #print("W=", w, "B=", b)
         board.print_board() if p.visualize_board else None
 
         winner = w if board.winner == 1 else b
@@ -133,7 +131,8 @@ def run_tournament():
             print(f"{actors[i].name} victories: {actor1_wins}")
             print(f"{actors[j].name} victories: {actor2_wins}")
             results.append([[actors[i].name, actor1_wins], [actors[j].name, actor2_wins]])
-    plot_results(results)
+    if results:
+        plot_results(results)
 
 
 def load_saved_model(filename):

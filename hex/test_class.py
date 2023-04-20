@@ -2,7 +2,9 @@ import numpy as np
 
 
 class TestClass:
-
+    """
+    Test classe with methods for simple evaluation of certain states, when one move in particular is desirable
+    """
     def test_5x5(self, actor):
         a = actor.eval_state(np.array([1, 2, 0, 0, 0,
                                        1, 2, 0, 0, 0,
@@ -72,4 +74,5 @@ class TestClass:
         elif n == 7:
             self.test_7x7(actor)
         else:
+            pass
             print("No test data for n =", n)

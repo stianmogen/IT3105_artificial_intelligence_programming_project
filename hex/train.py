@@ -137,13 +137,13 @@ def play(size, num_games, sample_size, epochs, epsilon, sigma, alpha, epsilon_de
         player1.epsilon -= epsilon_decay
         player1.sigma -= sigma_decay
         player1.alpha -= alpha_decay
-        if ga % save_interval == 0 or ga == 1:
+        if ga % save_interval == 0:
             actor.save_model(f"{size}X{size}/{p.model_name}-{ga}")
 
         end_time = time.time()
         elapsed_time = end_time - start_time
         print("Elapsed time: ", elapsed_time, " seconds")
-    actor.save_model(f"{size}X{size}/{p.rollouts}{p.model_name}-{ga}")
+    actor.save_model(f"{size}X{size}/{p.model_name}-{ga}")
 
 
 if __name__ == "__main__":

@@ -1,10 +1,6 @@
 from collections import namedtuple, deque
 import random
 
-
-# https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
-import torch
-
 """
 ReplayBuffer class to store states to be used for training neural network
 """
